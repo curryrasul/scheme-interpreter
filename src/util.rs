@@ -37,3 +37,32 @@ impl<T: Clone> NamedArgsList<T> {
         return res;
     }
 }
+
+#[derive(Clone)]
+pub struct VariablesSet<T> {
+    sets: Vec<NamedArgsList<T>>,
+}
+
+impl<T: Clone> VariablesSet<T> {
+    pub fn new() -> Self {
+        Self { sets: Vec::new() }
+    }
+
+    pub fn find_var(&self, name: &String) -> Option<T> {
+        for container in self.sets.iter().rev() {
+            let val = container.find_by_name(name);
+            if val.is_some() {
+                return val;
+            }
+        }
+        return None;
+    }
+
+    pub fn add_set(&mut self, container: NamedArgsList<T>) {
+        self.sets.push(container);
+    }
+
+    pub fn pop_set(&mut self) {
+        self.sets.pop();
+    }
+}

@@ -1,4 +1,4 @@
-use crate::util::NamedArgsList;
+use crate::{VariablesSet};
 use core::fmt;
 
 #[derive(Clone)]
@@ -38,13 +38,8 @@ pub enum ScmProcUnit {
     Lambda { args: Vec<String>, units_cnt: usize },
 }
 
-#[derive(Clone)]
-pub struct ScmVariablesSet {
-    sets: Vec<NamedArgsList<ScmValue>>,
-}
-
 pub struct ScmExecContext {
-    variables: ScmVariablesSet,
+    variables: VariablesSet<ScmValue>,
 }
 
 fn find_arg(name: &String, args: &[ScmValue], args_names: &[String]) -> Option<ScmValue> {
@@ -59,117 +54,83 @@ fn find_arg(name: &String, args: &[ScmValue], args_names: &[String]) -> Option<S
     return res;
 }
 
-pub fn exec_callable(ctx: &ScmExecContext, proc: ScmCallable, call_args: &[ScmValue]) -> ScmValue {
-    let res = match proc {
-        ScmCallable::Builtin(func) => (func)(ctx, call_args),
+fn exec_custom_proc(ctx: &ScmExecContext, proc: ScmProcedure, call_args: &[ScmValue]) -> ScmValue {
+    let mut stack = Vec::<ScmValue>::new();
+    let mut iter = proc.instructions.iter().rev();
 
-        ScmCallable::CustomProc(p) => {
-            let mut stack = Vec::<ScmValue>::new();
-
-            let mut iter = p.instructions.iter().rev();
-            while let Some(proc_unit) = iter.next() {
-                match proc_unit {
-                    ScmProcUnit::Val(v) => {
-                        stack.push(v.clone());
-                    }
-
-                    ScmProcUnit::Variable(name) => {
-                        let mut var = find_arg(name, call_args, &p.params);
-                        if var.is_none() {
-                            var = ctx.variables.find_var(&name);
-                        }
-                        assert!(!var.is_none(), "Unknown variable: {}", name);
-                        stack.push(var.unwrap());
-                    }
-
-                    ScmProcUnit::ProcCall(proc, args_cnt) => {
-                        let mut args = Vec::<ScmValue>::new();
-                        for _ in 0..*args_cnt {
-                            args.push(stack.pop().unwrap())
-                        }
-
-                        let res = match proc {
-                            ScmCallable::Builtin(func) => (func)(ctx, &args),
-                            ScmCallable::CustomProc(proc) => {
-                                exec_callable(ctx, ScmCallable::CustomProc(proc.clone()), &args)
-                            }
-                        };
-
-                        stack.push(res);
-                    }
-
-                    ScmProcUnit::Lambda { args, units_cnt } => {
-                        let mut data = Vec::<ScmProcUnit>::new();
-                        for _ in 0..*units_cnt {
-                            let unit = iter.next().unwrap();
-                            let val = match unit {
-                                ScmProcUnit::Variable(name) => {
-                                    let mut is_local_arg = false;
-                                    for arg_name in args.iter() {
-                                        if name == arg_name {
-                                            is_local_arg = true;
-                                            break;
-                                        }
-                                    }
-
-                                    if is_local_arg {
-                                        unit.clone()
-                                    } else {
-                                        let mut var = find_arg(name, call_args, &p.params);
-                                        if var.is_none() {
-                                            var = ctx.variables.find_var(&name);
-                                        }
-                                        assert!(!var.is_none(), "Unknown variable: {}", name);
-                                        ScmProcUnit::Val(var.unwrap())
-                                    }
-                                }
-                                _ => unit.clone(),
-                            };
-                            data.push(val);
-                        }
-
-                        data.reverse();
-                        let callable_lambda = ScmCallable::CustomProc(ScmProcedure {
-                            params: args.clone(),
-                            instructions: data,
-                        });
-                        stack.push(ScmValue::Procedure(callable_lambda))
-                    }
-                }
+    while let Some(proc_unit) = iter.next() {
+        match proc_unit {
+            ScmProcUnit::Val(v) => {
+                stack.push(v.clone());
             }
 
-            stack.pop().unwrap()
-        }
-    };
+            ScmProcUnit::Variable(name) => {
+                let var = find_arg(name, call_args, &proc.params)
+                    .or_else(|| ctx.variables.find_var(&name));
+                assert!(!var.is_none(), "Unknown variable: {}", name);
+                stack.push(var.unwrap());
+            }
 
-    return res;
+            ScmProcUnit::ProcCall(proc, args_cnt) => {
+                let mut args = Vec::<ScmValue>::new();
+                for _ in 0..*args_cnt {
+                    args.push(stack.pop().unwrap())
+                }
+
+                let res = match proc {
+                    ScmCallable::Builtin(func) => (func)(ctx, &args),
+                    ScmCallable::CustomProc(proc) => {
+                        exec_callable(ctx, ScmCallable::CustomProc(proc.clone()), &args)
+                    }
+                };
+
+                stack.push(res);
+            }
+
+            ScmProcUnit::Lambda { args, units_cnt } => {
+                let mut data = Vec::<ScmProcUnit>::new();
+                for _ in 0..*units_cnt {
+                    let unit = iter.next().unwrap();
+                    let val = match unit {
+                        ScmProcUnit::Variable(name) => {
+                            if args.iter().any(|it| name == it) {
+                                unit.clone()
+                            } else {
+                                let var = find_arg(name, call_args, &proc.params)
+                                    .or_else(|| ctx.variables.find_var(&name));
+                                assert!(!var.is_none(), "Unknown variable: {}", name);
+                                ScmProcUnit::Val(var.unwrap())
+                            }
+                        }
+
+                        _ => unit.clone(),
+                    };
+                    data.push(val);
+                }
+
+                data.reverse();
+                stack.push(ScmValue::Procedure(ScmCallable::CustomProc(ScmProcedure {
+                    params: args.clone(),
+                    instructions: data,
+                })));
+            }
+        }
+    }
+
+    stack.pop().unwrap()
 }
 
-impl ScmVariablesSet {
-    pub fn find_var(&self, name: &String) -> Option<ScmValue> {
-        for container in self.sets.iter().rev() {
-            let val = container.find_by_name(name);
-            if val.is_some() {
-                return val;
-            }
-        }
-        // panic!("Unknown variable: {}", name);
-        return None;
-    }
-
-    pub fn add_set(&mut self, container: NamedArgsList<ScmValue>) {
-        self.sets.push(container);
-    }
-
-    pub fn pop_set(&mut self) {
-        self.sets.pop();
-    }
+pub fn exec_callable(ctx: &ScmExecContext, proc: ScmCallable, call_args: &[ScmValue]) -> ScmValue {
+    return match proc {
+        ScmCallable::Builtin(func) => (func)(ctx, call_args),
+        ScmCallable::CustomProc(proc) => exec_custom_proc(ctx, proc, call_args),
+    };
 }
 
 impl ScmExecContext {
     pub fn new() -> ScmExecContext {
         return ScmExecContext {
-            variables: ScmVariablesSet { sets: Vec::new() },
+            variables: VariablesSet::new(),
         };
     }
 }
