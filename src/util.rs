@@ -5,9 +5,7 @@ pub struct NamedArgsList<T> {
 
 impl<T: Clone> NamedArgsList<T> {
     pub fn new() -> Self {
-        return Self {
-            args: Vec::new(),
-        };
+        return Self { args: Vec::new() };
     }
 
     pub fn get_ith_val(&self, ind: usize) -> T {
@@ -17,7 +15,7 @@ impl<T: Clone> NamedArgsList<T> {
     pub fn find_by_name(&self, name: &String) -> Option<T> {
         for arg in self.args.iter() {
             if arg.0 == *name {
-                return Some(arg.1.clone())
+                return Some(arg.1.clone());
             }
         }
         return None;
@@ -39,4 +37,3 @@ impl<T: Clone> NamedArgsList<T> {
         return res;
     }
 }
-

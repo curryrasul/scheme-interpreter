@@ -36,7 +36,10 @@ fn gen_test_code2() -> ScmProcedure {
     instr.push(ScmProcUnit::Variable(String::from("x")));
     instr.push(ScmProcUnit::Variable(String::from("y")));
     instr.push(ScmProcUnit::Val(ScmValue::Integer(5)));
-    instr.push(ScmProcUnit::Lambda{ args: vec![ String::from("x"), String::from("y") ], units_cnt: 4 });
+    instr.push(ScmProcUnit::Lambda {
+        args: vec![String::from("x"), String::from("y")],
+        units_cnt: 4,
+    });
 
     instr.push(ScmProcUnit::ProcCall(SCM_BUILTIN_LIST.clone(), 2));
     instr.push(ScmProcUnit::Val(ScmValue::Integer(3)));

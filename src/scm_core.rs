@@ -1,5 +1,5 @@
-use core::fmt;
 use crate::util::NamedArgsList;
+use core::fmt;
 
 #[derive(Clone)]
 pub enum ScmValue {
@@ -9,7 +9,10 @@ pub enum ScmValue {
     Char(char),
     String(String),
     Symbol(String),
-    DotPair { car: Box<ScmValue>, cdr: Box<ScmValue> },
+    DotPair {
+        car: Box<ScmValue>,
+        cdr: Box<ScmValue>,
+    },
     Nil,
     Procedure(ScmCallable),
 }
@@ -27,7 +30,8 @@ pub struct ScmProcedure {
 }
 
 #[derive(Clone)]
-pub enum ScmProcUnit { // Used only as element of procedure's stack
+pub enum ScmProcUnit {
+    // Used only as element of procedure's stack
     Val(ScmValue),
     Variable(String),
     ProcCall(ScmCallable, usize),
@@ -67,7 +71,7 @@ pub fn exec_callable(ctx: &ScmExecContext, proc: ScmCallable, call_args: &[ScmVa
                 match proc_unit {
                     ScmProcUnit::Val(v) => {
                         stack.push(v.clone());
-                    },
+                    }
 
                     ScmProcUnit::Variable(name) => {
                         let mut var = find_arg(name, call_args, &p.params);
@@ -76,7 +80,7 @@ pub fn exec_callable(ctx: &ScmExecContext, proc: ScmCallable, call_args: &[ScmVa
                         }
                         assert!(!var.is_none(), "Unknown variable: {}", name);
                         stack.push(var.unwrap());
-                    },
+                    }
 
                     ScmProcUnit::ProcCall(proc, args_cnt) => {
                         let mut args = Vec::<ScmValue>::new();
@@ -85,14 +89,14 @@ pub fn exec_callable(ctx: &ScmExecContext, proc: ScmCallable, call_args: &[ScmVa
                         }
 
                         let res = match proc {
-                            ScmCallable::Builtin(func) =>
-                                (func)(ctx, &args),
-                            ScmCallable::CustomProc(proc) =>
-                                exec_callable(ctx, ScmCallable::CustomProc(proc.clone()), &args),
+                            ScmCallable::Builtin(func) => (func)(ctx, &args),
+                            ScmCallable::CustomProc(proc) => {
+                                exec_callable(ctx, ScmCallable::CustomProc(proc.clone()), &args)
+                            }
                         };
 
                         stack.push(res);
-                    },
+                    }
 
                     ScmProcUnit::Lambda { args, units_cnt } => {
                         let mut data = Vec::<ScmProcUnit>::new();
@@ -107,11 +111,10 @@ pub fn exec_callable(ctx: &ScmExecContext, proc: ScmCallable, call_args: &[ScmVa
                                             break;
                                         }
                                     }
-                                    
+
                                     if is_local_arg {
                                         unit.clone()
-                                    }
-                                    else {
+                                    } else {
                                         let mut var = find_arg(name, call_args, &p.params);
                                         if var.is_none() {
                                             var = ctx.variables.find_var(&name);
@@ -119,19 +122,19 @@ pub fn exec_callable(ctx: &ScmExecContext, proc: ScmCallable, call_args: &[ScmVa
                                         assert!(!var.is_none(), "Unknown variable: {}", name);
                                         ScmProcUnit::Val(var.unwrap())
                                     }
-                                },
+                                }
                                 _ => unit.clone(),
                             };
                             data.push(val);
                         }
-                        
+
                         data.reverse();
                         let callable_lambda = ScmCallable::CustomProc(ScmProcedure {
                             params: args.clone(),
                             instructions: data,
                         });
                         stack.push(ScmValue::Procedure(callable_lambda))
-                    },
+                    }
                 }
             }
 
@@ -151,7 +154,7 @@ impl ScmVariablesSet {
             }
         }
         // panic!("Unknown variable: {}", name);
-        return None
+        return None;
     }
 
     pub fn add_set(&mut self, container: NamedArgsList<ScmValue>) {
@@ -166,9 +169,7 @@ impl ScmVariablesSet {
 impl ScmExecContext {
     pub fn new() -> ScmExecContext {
         return ScmExecContext {
-            variables: ScmVariablesSet {
-                sets: Vec::new(),
-            }
+            variables: ScmVariablesSet { sets: Vec::new() },
         };
     }
 }
@@ -182,8 +183,7 @@ impl fmt::Display for ScmValue {
             ScmValue::Char(val) => write!(f, "{}", val),
             ScmValue::String(val) => write!(f, "{}", val),
             ScmValue::Symbol(val) => write!(f, "'{}", val),
-            ScmValue::DotPair { car, cdr } =>
-                write!(f, "({} . {})", car, cdr),
+            ScmValue::DotPair { car, cdr } => write!(f, "({} . {})", car, cdr),
             ScmValue::Nil => write!(f, "nil"),
             ScmValue::Procedure(_) => write!(f, "<proc>"),
         }

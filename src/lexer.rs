@@ -25,7 +25,7 @@ pub fn lex(code: String) -> Vec<Token> {
 
     let chars: Vec<char> = code.chars().collect();
 
-    for i in 0..chars.len() {
+    for mut i in 0..chars.len() {
         match chars[i] {
             ' ' => row += 1,
             '\n' => {
@@ -46,10 +46,34 @@ pub fn lex(code: String) -> Vec<Token> {
                 });
                 row += 1;
             }
+            '1'..='9' => {
+                let mut number = String::from(chars[i]);
 
+                while let Some(cur) = chars.get(i + 1) {
+                    if cur.is_digit(10) {
+                        number.push(*cur);
+                    }
+                    i += 1;
+                }
+            }
             _ => panic!("Wrong character!"),
         }
     }
 
     tokens
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test() {
+        let c = 'a';
+
+        match c {
+            '1'..='9' => println!("Hello world"),
+            _ => panic!(),
+        }
+    }
 }
