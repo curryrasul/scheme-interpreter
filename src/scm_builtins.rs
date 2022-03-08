@@ -1,12 +1,28 @@
-use crate::scm_core::*;
+use crate::{scm_core::*, scm_utils::scm_is_list, scm_list_to_vec};
 
-pub static SCM_BUILTIN_ADD: ScmCallable = ScmCallable::Builtin(builtin_add);
-pub static SCM_BUILTIN_CONS: ScmCallable = ScmCallable::Builtin(builtin_cons);
-pub static SCM_BUILTIN_CAR: ScmCallable = ScmCallable::Builtin(builtin_car);
-pub static SCM_BUILTIN_CDR: ScmCallable = ScmCallable::Builtin(builtin_cdr);
+pub const SCM_BUILTIN_APPLY: ScmCallable = ScmCallable::Builtin(builtin_apply);
+pub const SCM_BUILTIN_ADD: ScmCallable = ScmCallable::Builtin(builtin_add);
+pub const SCM_BUILTIN_CONS: ScmCallable = ScmCallable::Builtin(builtin_cons);
+pub const SCM_BUILTIN_CAR: ScmCallable = ScmCallable::Builtin(builtin_car);
+pub const SCM_BUILTIN_CDR: ScmCallable = ScmCallable::Builtin(builtin_cdr);
+pub const SCM_BUILTIN_IS_LIST: ScmCallable = ScmCallable::Builtin(builtin_is_list);
 
 
-fn builtin_add(args: &[ScmValue]) -> ScmValue {
+fn builtin_apply(ctx: &ScmExecContext, args: &[ScmValue]) -> ScmValue {
+    assert!(args.len() == 2);
+    assert!(scm_is_list(&args[1]));
+
+    let proc = match &args[0] {
+        ScmValue::Procedure(proc) => proc,
+        _ => { panic!("Only procedures can be called"); }
+    };
+
+    let call_args = &scm_list_to_vec(&args[1]);
+
+    return exec_callable(ctx, proc.clone(), call_args);
+}
+
+fn builtin_add(_: &ScmExecContext, args: &[ScmValue]) -> ScmValue {
     if args.len() == 0 {
         return ScmValue::Integer(0);
     }
@@ -47,7 +63,7 @@ fn builtin_add(args: &[ScmValue]) -> ScmValue {
     }
 }
 
-fn builtin_cons(args: &[ScmValue]) -> ScmValue {
+fn builtin_cons(_: &ScmExecContext, args: &[ScmValue]) -> ScmValue {
     if args.len() != 2 {
         panic!("Cons requires exactly 2 arguments");
     }
@@ -57,7 +73,7 @@ fn builtin_cons(args: &[ScmValue]) -> ScmValue {
     };
 }
 
-fn builtin_car(args: &[ScmValue]) -> ScmValue {
+fn builtin_car(_: &ScmExecContext, args: &[ScmValue]) -> ScmValue {
     if args.len() != 1 {
         panic!("Car requires exactly 1 argument");
     }
@@ -67,7 +83,7 @@ fn builtin_car(args: &[ScmValue]) -> ScmValue {
     };
 }
 
-fn builtin_cdr(args: &[ScmValue]) -> ScmValue {
+fn builtin_cdr(_: &ScmExecContext, args: &[ScmValue]) -> ScmValue {
     if args.len() != 1 {
         panic!("Car requires exactly 1 argument");
     }
@@ -75,4 +91,9 @@ fn builtin_cdr(args: &[ScmValue]) -> ScmValue {
         ScmValue::DotPair{ cdr, .. } => (*cdr).clone(),
         _ => { panic!("Car requires argument of type DotPair"); },
     };
+}
+
+fn builtin_is_list(_: &ScmExecContext, args: &[ScmValue]) -> ScmValue {
+    assert!(args.len() == 1);
+    return ScmValue::Bool(scm_is_list(&args[0]));
 }
