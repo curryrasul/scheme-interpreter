@@ -169,12 +169,12 @@ impl ScmExecContext {
 impl fmt::Debug for ScmValue {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            ScmValue::Integer(val) => write!(f, "{}", val),
-            ScmValue::Number(val) => write!(f, "{}", val),
-            ScmValue::Bool(val) => write!(f, "{}", val),
-            ScmValue::Char(val) => write!(f, "{}", val),
-            ScmValue::String(val) => write!(f, "{}", val),
-            ScmValue::Symbol(val) => write!(f, "'{}", val),
+            ScmValue::Integer(val) => write!(f, "ScmValue::Integer({})", val),
+            ScmValue::Number(val) => write!(f, "ScmValue::Number({})", val),
+            ScmValue::Bool(val) => write!(f, "ScmValue::Bool({})", val),
+            ScmValue::Char(val) => write!(f, "ScmValue::Char({})", val),
+            ScmValue::String(val) => write!(f, "ScmValue::String({})", val),
+            ScmValue::Symbol(val) => write!(f, "ScmValue::Symbol({})", val),
             ScmValue::DotPair { car, cdr } => write!(f, "({:?} . {:?})", car, cdr),
             ScmValue::Nil => write!(f, "nil"),
             ScmValue::Procedure(_) => write!(f, "<proc>"),
