@@ -3,7 +3,7 @@ use crate::{scm_core::*, scm_list_len, scm_list_to_vec, scm_utils::scm_is_list};
 // System
 
 pub const SCM_BUILTIN_APPLY: ScmCallable =
-    ScmCallable::Builtin(|ctx: &ScmExecContext, args: &[ScmValue]| -> ScmValue {
+    ScmCallable::Builtin(|ctx, args| -> ScmValue {
         assert!(args.len() == 2);
         assert!(scm_is_list(&args[1]));
 
@@ -20,21 +20,21 @@ pub const SCM_BUILTIN_APPLY: ScmCallable =
     });
 
 pub const SCM_BUILTIN_DISPLAY: ScmCallable =
-    ScmCallable::Builtin(|_: &ScmExecContext, args: &[ScmValue]| -> ScmValue {
+    ScmCallable::Builtin(|_, args| -> ScmValue {
         assert!(args.len() == 1);
         print!("{}", args[0]);
         return ScmValue::Nil;
     });
 
 pub const SCM_BUILTIN_ERROR: ScmCallable =
-    ScmCallable::Builtin(|_: &ScmExecContext, args: &[ScmValue]| -> ScmValue {
+    ScmCallable::Builtin(|_, args| -> ScmValue {
         assert!(args.len() == 1);
         eprint!("{}", args[0]);
         return ScmValue::Nil;
     });
 
 pub const SCM_BUILTIN_NEWLINE: ScmCallable =
-    ScmCallable::Builtin(|_: &ScmExecContext, args: &[ScmValue]| -> ScmValue {
+    ScmCallable::Builtin(|_, args| -> ScmValue {
         assert!(args.len() == 0);
         println!("");
         return ScmValue::Nil;
@@ -43,7 +43,7 @@ pub const SCM_BUILTIN_NEWLINE: ScmCallable =
 // Arithmetics
 
 pub const SCM_BUILTIN_ADD: ScmCallable =
-    ScmCallable::Builtin(|_: &ScmExecContext, args: &[ScmValue]| -> ScmValue {
+    ScmCallable::Builtin(|_, args| -> ScmValue {
         if args.len() == 0 {
             return ScmValue::Integer(0);
         } else {
@@ -87,7 +87,7 @@ pub const SCM_BUILTIN_ADD: ScmCallable =
 // TODO: - * /
 
 pub const SCM_BUILTIN_ABS: ScmCallable =
-    ScmCallable::Builtin(|_: &ScmExecContext, args: &[ScmValue]| -> ScmValue {
+    ScmCallable::Builtin(|_, args| -> ScmValue {
         assert!(args.len() == 1, "ABS requires exactly 1 argument");
         return match args[0].clone() {
             ScmValue::Integer(val) => ScmValue::Integer(val.abs()),
@@ -101,7 +101,7 @@ pub const SCM_BUILTIN_ABS: ScmCallable =
 // Pairs and lists
 
 pub const SCM_BUILTIN_CONS: ScmCallable =
-    ScmCallable::Builtin(|_: &ScmExecContext, args: &[ScmValue]| -> ScmValue {
+    ScmCallable::Builtin(|_, args| -> ScmValue {
         assert!(args.len() == 2, "CONS requires exactly 2 arguments");
         return ScmValue::DotPair {
             car: Box::new(args[0].clone()),
@@ -110,7 +110,7 @@ pub const SCM_BUILTIN_CONS: ScmCallable =
     });
 
 pub const SCM_BUILTIN_CAR: ScmCallable =
-    ScmCallable::Builtin(|_: &ScmExecContext, args: &[ScmValue]| -> ScmValue {
+    ScmCallable::Builtin(|_, args| -> ScmValue {
         assert!(args.len() == 1, "CAR requires exactly 1 argument");
         return match args[0].clone() {
             ScmValue::DotPair { car, .. } => (*car).clone(),
@@ -121,7 +121,7 @@ pub const SCM_BUILTIN_CAR: ScmCallable =
     });
 
 pub const SCM_BUILTIN_CDR: ScmCallable =
-    ScmCallable::Builtin(|_: &ScmExecContext, args: &[ScmValue]| -> ScmValue {
+    ScmCallable::Builtin(|_, args| -> ScmValue {
         assert!(args.len() == 1, "CDR requires exactly 1 argument");
         return match args[0].clone() {
             ScmValue::DotPair { cdr, .. } => (*cdr).clone(),
@@ -132,7 +132,7 @@ pub const SCM_BUILTIN_CDR: ScmCallable =
     });
 
 pub const SCM_BUILTIN_LIST: ScmCallable =
-    ScmCallable::Builtin(|_: &ScmExecContext, args: &[ScmValue]| -> ScmValue {
+    ScmCallable::Builtin(|_, args| -> ScmValue {
         let mut res = ScmValue::Nil;
         for arg in args.iter().rev() {
             res = ScmValue::DotPair {
@@ -144,7 +144,7 @@ pub const SCM_BUILTIN_LIST: ScmCallable =
     });
 
 pub const SCM_BUILTIN_LENGTH: ScmCallable =
-    ScmCallable::Builtin(|_: &ScmExecContext, args: &[ScmValue]| -> ScmValue {
+    ScmCallable::Builtin(|_, args| -> ScmValue {
         assert!(args.len() == 1);
         let res = scm_list_len(&args[0]);
         return ScmValue::Integer(res.unwrap());
@@ -153,7 +153,7 @@ pub const SCM_BUILTIN_LENGTH: ScmCallable =
 // Types predicates
 
 pub const SCM_BUILTIN_IS_ATOM: ScmCallable =
-    ScmCallable::Builtin(|_: &ScmExecContext, args: &[ScmValue]| -> ScmValue {
+    ScmCallable::Builtin(|_, args| -> ScmValue {
         assert!(args.len() == 1);
         if let ScmValue::Bool(_)
         | ScmValue::Char(_)
@@ -170,7 +170,7 @@ pub const SCM_BUILTIN_IS_ATOM: ScmCallable =
     });
 
 pub const SCM_BUILTIN_IS_BOOL: ScmCallable =
-    ScmCallable::Builtin(|_: &ScmExecContext, args: &[ScmValue]| -> ScmValue {
+    ScmCallable::Builtin(|_, args| -> ScmValue {
         assert!(args.len() == 1);
         if let ScmValue::Bool(_) = args[0] {
             return ScmValue::Bool(true);
@@ -180,7 +180,7 @@ pub const SCM_BUILTIN_IS_BOOL: ScmCallable =
     });
 
 pub const SCM_BUILTIN_IS_INTEGER: ScmCallable =
-    ScmCallable::Builtin(|_: &ScmExecContext, args: &[ScmValue]| -> ScmValue {
+    ScmCallable::Builtin(|_, args| -> ScmValue {
         assert!(args.len() == 1);
         if let ScmValue::Integer(_) = args[0] {
             return ScmValue::Bool(true);
@@ -190,7 +190,7 @@ pub const SCM_BUILTIN_IS_INTEGER: ScmCallable =
     });
 
 pub const SCM_BUILTIN_IS_NUMBER: ScmCallable =
-    ScmCallable::Builtin(|_: &ScmExecContext, args: &[ScmValue]| -> ScmValue {
+    ScmCallable::Builtin(|_, args| -> ScmValue {
         assert!(args.len() == 1);
         if let ScmValue::Number(_) = args[0] {
             return ScmValue::Bool(true);
@@ -200,7 +200,7 @@ pub const SCM_BUILTIN_IS_NUMBER: ScmCallable =
     });
 
 pub const SCM_BUILTIN_IS_NULL: ScmCallable =
-    ScmCallable::Builtin(|_: &ScmExecContext, args: &[ScmValue]| -> ScmValue {
+    ScmCallable::Builtin(|_, args| -> ScmValue {
         assert!(args.len() == 1);
         if let ScmValue::Nil = args[0] {
             return ScmValue::Bool(true);
@@ -210,7 +210,7 @@ pub const SCM_BUILTIN_IS_NULL: ScmCallable =
     });
 
 pub const SCM_BUILTIN_IS_PAIR: ScmCallable =
-    ScmCallable::Builtin(|_: &ScmExecContext, args: &[ScmValue]| -> ScmValue {
+    ScmCallable::Builtin(|_, args| -> ScmValue {
         assert!(args.len() == 1);
         if let ScmValue::DotPair { .. } = args[0] {
             return ScmValue::Bool(true);
@@ -220,13 +220,13 @@ pub const SCM_BUILTIN_IS_PAIR: ScmCallable =
     });
 
 pub const SCM_BUILTIN_IS_LIST: ScmCallable =
-    ScmCallable::Builtin(|_: &ScmExecContext, args: &[ScmValue]| -> ScmValue {
+    ScmCallable::Builtin(|_, args| -> ScmValue {
         assert!(args.len() == 1);
         return ScmValue::Bool(scm_is_list(&args[0]));
     });
 
 pub const SCM_BUILTIN_IS_PROCEDURE: ScmCallable =
-    ScmCallable::Builtin(|_: &ScmExecContext, args: &[ScmValue]| -> ScmValue {
+    ScmCallable::Builtin(|_, args| -> ScmValue {
         assert!(args.len() == 1);
         if let ScmValue::Procedure(_) = args[0] {
             return ScmValue::Bool(true);
@@ -236,7 +236,7 @@ pub const SCM_BUILTIN_IS_PROCEDURE: ScmCallable =
     });
 
 pub const SCM_BUILTIN_IS_STRING: ScmCallable =
-    ScmCallable::Builtin(|_: &ScmExecContext, args: &[ScmValue]| -> ScmValue {
+    ScmCallable::Builtin(|_, args| -> ScmValue {
         assert!(args.len() == 1);
         if let ScmValue::String(_) = args[0] {
             return ScmValue::Bool(true);
@@ -246,7 +246,7 @@ pub const SCM_BUILTIN_IS_STRING: ScmCallable =
     });
 
 pub const SCM_BUILTIN_IS_SYMBOL: ScmCallable =
-    ScmCallable::Builtin(|_: &ScmExecContext, args: &[ScmValue]| -> ScmValue {
+    ScmCallable::Builtin(|_, args| -> ScmValue {
         assert!(args.len() == 1);
         if let ScmValue::Symbol(_) = args[0] {
             return ScmValue::Bool(true);

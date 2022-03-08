@@ -55,9 +55,15 @@ fn gen_test_code2() -> ScmProcedure {
 fn gen_test_code3() -> ScmProcedure {
     let mut instr = Vec::<ScmProcUnit>::new();
 
+    // (begin
+    //     (if #f
+    //         (begin (display 55) (newline))
+    //         (begin (display 10) (newline))
+    //     (display 55) (newline))
+
     instr.push(ScmProcUnit::ProcCall(SCM_BUILTIN_NEWLINE.clone(), 0));
     instr.push(ScmProcUnit::ProcCall(SCM_BUILTIN_DISPLAY.clone(), 1));
-    instr.push(ScmProcUnit::Val(ScmValue::Integer(666)));
+    instr.push(ScmProcUnit::Variable(String::from("myvar")));
 
     instr.push(ScmProcUnit::ProcCall(SCM_BUILTIN_NEWLINE.clone(), 0));
     instr.push(ScmProcUnit::ProcCall(SCM_BUILTIN_DISPLAY.clone(), 1));
@@ -71,6 +77,8 @@ fn gen_test_code3() -> ScmProcedure {
 
     instr.push(ScmProcUnit::Val(ScmValue::Bool(false)));
 
+    instr.push(ScmProcUnit::Assign(String::from("myvar"), ScmValue::Integer(666)));
+
     return ScmProcedure {
         params: Vec::<String>::new(),
         instructions: instr,
@@ -78,9 +86,9 @@ fn gen_test_code3() -> ScmProcedure {
 }
 
 fn main() {
-    let ctx = ScmExecContext::new();
+    let mut ctx = ScmExecContext::new();
     let proc = gen_test_code3();
 
     let callable = ScmCallable::CustomProc(proc);
-    exec_callable(&ctx, callable, &Vec::new());
+    exec_callable(&mut ctx, callable, &Vec::new());
 }

@@ -45,7 +45,9 @@ pub struct VariablesSet<T> {
 
 impl<T: Clone> VariablesSet<T> {
     pub fn new() -> Self {
-        Self { sets: Vec::new() }
+        let mut res = VariablesSet { sets: Vec::new() };
+        res.sets.push(NamedArgsList::<T>::new());
+        return res;
     }
 
     pub fn find_var(&self, name: &String) -> Option<T> {
@@ -56,6 +58,17 @@ impl<T: Clone> VariablesSet<T> {
             }
         }
         return None;
+    }
+    
+    pub fn add_or_assign_var(&mut self, name: &String, val: T) {
+        let cur_set: &mut NamedArgsList<T> = self.sets.last_mut().unwrap();
+        for mut var in cur_set.args.iter_mut() {
+            if var.0 == *name {
+                var.1 = val;
+                return;
+            }
+        }
+        cur_set.args.push((name.clone(), val));
     }
 
     pub fn add_set(&mut self, container: NamedArgsList<T>) {

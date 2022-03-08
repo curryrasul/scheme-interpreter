@@ -19,7 +19,7 @@ pub enum ScmValue {
 
 #[derive(Clone)]
 pub enum ScmCallable {
-    Builtin(fn(ctx: &ScmExecContext, args: &[ScmValue]) -> ScmValue),
+    Builtin(fn(ctx: &mut ScmExecContext, args: &[ScmValue]) -> ScmValue),
     CustomProc(ScmProcedure),
 }
 
@@ -38,6 +38,7 @@ pub enum ScmProcUnit {
     Lambda { args: Vec<String>, units_cnt: usize },
     TrueBranch(usize),  // Skip size
     FalseBranch(usize), // Skip size
+    Assign(String, ScmValue), // Define and assign are same here
 }
 
 pub struct ScmExecContext {
@@ -56,7 +57,7 @@ fn find_arg(name: &String, args: &[ScmValue], args_names: &[String]) -> Option<S
     return res;
 }
 
-fn exec_custom_proc(ctx: &ScmExecContext, proc: ScmProcedure, call_args: &[ScmValue]) -> ScmValue {
+fn exec_custom_proc(ctx: &mut ScmExecContext, proc: ScmProcedure, call_args: &[ScmValue]) -> ScmValue {
     let mut stack = Vec::<ScmValue>::new();
     let mut iter = proc.instructions.iter().rev();
 
@@ -132,13 +133,17 @@ fn exec_custom_proc(ctx: &ScmExecContext, proc: ScmProcedure, call_args: &[ScmVa
                     iter.next();
                 }
             }
+
+            ScmProcUnit::Assign(name, val) => {
+                ctx.variables.add_or_assign_var(name, val.clone());
+            },
         }
     }
 
     stack.pop().unwrap()
 }
 
-pub fn exec_callable(ctx: &ScmExecContext, proc: ScmCallable, call_args: &[ScmValue]) -> ScmValue {
+pub fn exec_callable(ctx: &mut ScmExecContext, proc: ScmCallable, call_args: &[ScmValue]) -> ScmValue {
     return match proc {
         ScmCallable::Builtin(func) => (func)(ctx, call_args),
         ScmCallable::CustomProc(proc) => exec_custom_proc(ctx, proc, call_args),
