@@ -20,13 +20,13 @@ pub const SCM_BUILTIN_APPLY: ScmCallable = ScmCallable::Builtin(|ctx, args| -> S
 
 pub const SCM_BUILTIN_DISPLAY: ScmCallable = ScmCallable::Builtin(|_, args| -> ScmValue {
     assert!(args.len() == 1);
-    print!("{}", args[0]);
+    print!("{:?}", args[0]);
     return ScmValue::Nil;
 });
 
 pub const SCM_BUILTIN_ERROR: ScmCallable = ScmCallable::Builtin(|_, args| -> ScmValue {
     assert!(args.len() == 1);
-    eprint!("{}", args[0]);
+    eprint!("{:?}", args[0]);
     return ScmValue::Nil;
 });
 
