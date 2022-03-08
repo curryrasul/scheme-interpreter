@@ -1,4 +1,4 @@
-use crate::{VariablesSet};
+use crate::{VariablesSet, scm_is_true};
 use core::fmt;
 
 #[derive(Clone)]
@@ -36,6 +36,8 @@ pub enum ScmProcUnit {
     Variable(String),
     ProcCall(ScmCallable, usize),
     Lambda { args: Vec<String>, units_cnt: usize },
+    TrueBranch(usize),  // Skip size
+    FalseBranch(usize), // Skip size
 }
 
 pub struct ScmExecContext {
@@ -113,6 +115,22 @@ fn exec_custom_proc(ctx: &ScmExecContext, proc: ScmProcedure, call_args: &[ScmVa
                     params: args.clone(),
                     instructions: data,
                 })));
+            }
+
+            ScmProcUnit::TrueBranch(skip_cnt) => {
+                let cond = stack.pop().unwrap();
+                if !scm_is_true(&cond) {
+                    for _ in 0..*skip_cnt {
+                        iter.next();
+                    }
+                }
+            }
+
+            ScmProcUnit::FalseBranch(skip_cnt) => {
+                stack.pop();
+                for _ in 0..*skip_cnt {
+                    iter.next();
+                }
             }
         }
     }

@@ -30,8 +30,8 @@ fn gen_test_code2() -> ScmProcedure {
     // (apply (lambda (x y) (+ x y 5)) (cons 3 (cons 7 ())) )
     instr.push(ScmProcUnit::ProcCall(SCM_BUILTIN_NEWLINE.clone(), 0));
     instr.push(ScmProcUnit::ProcCall(SCM_BUILTIN_DISPLAY.clone(), 1));
-    instr.push(ScmProcUnit::ProcCall(SCM_BUILTIN_APPLY.clone(), 2));
 
+    instr.push(ScmProcUnit::ProcCall(SCM_BUILTIN_APPLY.clone(), 2));
     instr.push(ScmProcUnit::ProcCall(SCM_BUILTIN_ADD.clone(), 3));
     instr.push(ScmProcUnit::Variable(String::from("x")));
     instr.push(ScmProcUnit::Variable(String::from("y")));
@@ -51,9 +51,35 @@ fn gen_test_code2() -> ScmProcedure {
     };
 }
 
+#[allow(dead_code)]
+fn gen_test_code3() -> ScmProcedure {
+    let mut instr = Vec::<ScmProcUnit>::new();
+
+    instr.push(ScmProcUnit::ProcCall(SCM_BUILTIN_NEWLINE.clone(), 0));
+    instr.push(ScmProcUnit::ProcCall(SCM_BUILTIN_DISPLAY.clone(), 1));
+    instr.push(ScmProcUnit::Val(ScmValue::Integer(666)));
+
+    instr.push(ScmProcUnit::ProcCall(SCM_BUILTIN_NEWLINE.clone(), 0));
+    instr.push(ScmProcUnit::ProcCall(SCM_BUILTIN_DISPLAY.clone(), 1));
+    instr.push(ScmProcUnit::Val(ScmValue::Integer(10)));
+    instr.push(ScmProcUnit::FalseBranch(3));
+
+    instr.push(ScmProcUnit::ProcCall(SCM_BUILTIN_NEWLINE.clone(), 0));
+    instr.push(ScmProcUnit::ProcCall(SCM_BUILTIN_DISPLAY.clone(), 1));
+    instr.push(ScmProcUnit::Val(ScmValue::Integer(55)));
+    instr.push(ScmProcUnit::TrueBranch(4));
+
+    instr.push(ScmProcUnit::Val(ScmValue::Bool(false)));
+
+    return ScmProcedure {
+        params: Vec::<String>::new(),
+        instructions: instr,
+    };
+}
+
 fn main() {
     let ctx = ScmExecContext::new();
-    let proc = gen_test_code2();
+    let proc = gen_test_code3();
 
     let callable = ScmCallable::CustomProc(proc);
     exec_callable(&ctx, callable, &Vec::new());
