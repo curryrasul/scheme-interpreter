@@ -59,7 +59,7 @@ impl<T: Clone> VariablesSet<T> {
         }
         return None;
     }
-    
+
     pub fn add_or_assign_var(&mut self, name: &String, val: T) {
         let cur_set: &mut NamedArgsList<T> = self.sets.last_mut().unwrap();
         for mut var in cur_set.args.iter_mut() {

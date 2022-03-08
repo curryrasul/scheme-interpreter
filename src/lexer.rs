@@ -1,66 +1,60 @@
 use crate::scm_core::*;
+use std::vec::IntoIter;
 
-pub struct Position {
-    pub line: u32,
-    pub row: u32,
-}
-
-pub enum TokenType {
+pub enum Token {
     Identifier(String),
     Value(ScmValue),
     OpenBracket,
     ClosingBracket,
 }
 
-pub struct Token {
-    pub token_type: TokenType,
-    pub position: Position,
+struct Lexer {
+    chars: IntoIter<char>,
+    tokens: Vec<Token>,
+    current: Option<char>,
+    line: u32,
+    column: u32,
 }
 
-pub fn lex(code: String) -> Vec<Token> {
-    let mut tokens = Vec::<Token>::new();
+pub fn lex(s: &str) -> Vec<Token> {
+    let mut l = Lexer::new(s);
 
-    let mut line = 1;
-    let mut row = 1;
+    l.run();
 
-    let chars: Vec<char> = code.chars().collect();
+    l.tokens
+}
 
-    for mut i in 0..chars.len() {
-        match chars[i] {
-            ' ' => row += 1,
-            '\n' => {
-                line += 1;
-                row = 1;
-            }
-            '(' => {
-                tokens.push(Token {
-                    token_type: TokenType::OpenBracket,
-                    position: Position { line, row },
-                });
-                row += 1;
-            }
-            ')' => {
-                tokens.push(Token {
-                    token_type: TokenType::ClosingBracket,
-                    position: Position { line, row },
-                });
-                row += 1;
-            }
-            '1'..='9' => {
-                let mut number = String::from(chars[i]);
-
-                while let Some(cur) = chars.get(i + 1) {
-                    if cur.is_digit(10) {
-                        number.push(*cur);
-                    }
-                    i += 1;
-                }
-            }
-            _ => panic!("Wrong character!"),
+impl Lexer {
+    fn new(s: &str) -> Self {
+        Self {
+            chars: s.chars().collect::<Vec<char>>().into_iter(),
+            tokens: Vec::new(),
+            current: None,
+            line: 1,
+            column: 1,
         }
     }
 
-    tokens
+    fn run(&mut self) {}
+
+    fn increment(&mut self) {
+        if let Some('\n') = self.current {
+            self.line += 1;
+            self.column = 1;
+        } else {
+            self.column += 1;
+        }
+
+        self.current = self.chars.next();
+    }
+
+    fn parse_number(&mut self) {}
+
+    fn parse_identifier(&mut self) {}
+
+    fn parse_boolean(&mut self) {}
+
+    fn parse_string(&mut self) {}
 }
 
 #[cfg(test)]
@@ -68,12 +62,5 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test() {
-        let c = 'a';
-
-        match c {
-            '1'..='9' => println!("Hello world"),
-            _ => panic!(),
-        }
-    }
+    fn test() {}
 }

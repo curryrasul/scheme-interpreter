@@ -77,7 +77,10 @@ fn gen_test_code3() -> ScmProcedure {
 
     instr.push(ScmProcUnit::Val(ScmValue::Bool(false)));
 
-    instr.push(ScmProcUnit::Assign(String::from("myvar"), ScmValue::Integer(666)));
+    instr.push(ScmProcUnit::Assign(
+        String::from("myvar"),
+        ScmValue::Integer(666),
+    ));
 
     return ScmProcedure {
         params: Vec::<String>::new(),
