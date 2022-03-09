@@ -1,4 +1,4 @@
-use crate::{scm_core::*, scm_list_len, scm_list_to_vec, scm_utils::scm_is_list};
+use crate::{scm_core::*, scm_get_float, scm_list_len, scm_list_to_vec, scm_utils::scm_is_list};
 
 // System
 
@@ -197,6 +197,23 @@ pub const SCM_BUILTIN_ABS: ScmValue =
                 panic!("ABS requires numeric argument");
             }
         };
+    }));
+
+// Comparison
+
+pub const SCM_BUILTIN_LE: ScmValue =
+    ScmValue::Procedure(ScmCallable::Builtin(|_, args| -> ScmValue {
+        assert!(args.len() == 2, "LE requires exactly 2 arguments");
+
+        if let ScmValue::Integer(v1) = args[0] {
+            if let ScmValue::Integer(v2) = args[1] {
+                return ScmValue::Bool(v1 < v2);
+            }
+        }
+
+        let v1 = scm_get_float(&args[0]).or_else(|| panic!("LE requires numbers")).unwrap();
+        let v2 = scm_get_float(&args[1]).or_else(|| panic!("LE requires numbers")).unwrap();
+        ScmValue::Bool(v1 < v2)
     }));
 
 // Pairs and lists

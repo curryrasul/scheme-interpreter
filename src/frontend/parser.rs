@@ -127,8 +127,7 @@ impl Parser {
             self.parse_value(instr);
             let fbr_size = instr.len() - start_idx;
             instr.push(ScmProcUnit::FalseBranch(fbr_size));
-        }
-        else {
+        } else {
             instr.push(ScmProcUnit::Val(ScmValue::Nil));
             instr.push(ScmProcUnit::FalseBranch(1));
         }

@@ -70,3 +70,11 @@ pub fn scm_is_true(val: &ScmValue) -> bool {
 pub fn scm_is_false(val: &ScmValue) -> bool {
     return !scm_is_true(val);
 }
+
+pub fn scm_get_float(val: &ScmValue) -> Option<f64> {
+    return match *val {
+        ScmValue::Integer(val) => Some(val as f64),
+        ScmValue::Number(val) => Some(val),
+        _ => None,
+    };
+}

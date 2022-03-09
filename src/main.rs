@@ -56,7 +56,8 @@ fn main() {
     // let mut parser = Parser::new(&code);
 
     // let mut parser = Parser::new("(display (+ (- 3 2) 2)) (newline) (display 666)");
-    let mut parser = Parser::new("(if #f (display 142) (display 666))");
+    let mut parser = Parser::new(
+        "(define (fact x) (if (< x 2) 1 (* (fact (- x 1)) x))) (display (fact 5))");
     // let callable = ScmCallable::CustomProc(gen_test_code3());
     let callables = parser.parse();
 
