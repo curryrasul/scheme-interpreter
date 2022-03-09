@@ -1,12 +1,13 @@
 use crate::scm_core::*;
 use std::vec::IntoIter;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Token {
     Identifier(String),
     Value(ScmValue),
     OpenParen,
     ClosingParen,
+    Sentiel,
 }
 
 pub(super) struct Lexer {
@@ -60,6 +61,7 @@ impl Lexer {
             }
         }
 
+        self.tokens.push(Token::Sentiel);
         std::mem::take(&mut self.tokens)
     }
 
