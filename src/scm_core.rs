@@ -34,7 +34,7 @@ pub enum ScmProcUnit {
     // Used only as element of procedure's stack
     Val(ScmValue),
     Variable(String),
-    ProcCall(String, usize),    // Name and args cnt
+    ProcCall(String, usize), // Name and args cnt
     Lambda { args: Vec<String>, units_cnt: usize },
     TrueBranch(usize),        // Skip size
     FalseBranch(usize),       // Skip size
@@ -97,8 +97,7 @@ fn exec_custom_proc(
                     };
 
                     stack.push(res);
-                }
-                else {
+                } else {
                     panic!("Variable cannot be called: {}", proc_name);
                 }
             }

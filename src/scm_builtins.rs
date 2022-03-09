@@ -79,6 +79,40 @@ pub const SCM_BUILTIN_ADD: ScmCallable = ScmCallable::Builtin(|_, args| -> ScmVa
     }
 });
 
+pub const SCM_BUILTIN_SUB: ScmCallable = ScmCallable::Builtin(|_, args| -> ScmValue {
+    if args.len() == 0 {
+        return ScmValue::Integer(0);
+    }
+
+    if args.len() == 1 {
+        if let ScmValue::Integer(n) = args[0] {
+            return ScmValue::Integer(-n);
+        }
+    }
+
+    for arg in args.iter() {
+        match *arg {
+            ScmValue::Integer(_) => (),
+            _ => panic!("Unsupported value"),
+        }
+    }
+
+    let mut iterator = args.iter();
+    let mut sub = 0;
+
+    if let ScmValue::Integer(n) = iterator.next().unwrap() {
+        sub = *n;
+    }
+
+    for arg in iterator {
+        if let ScmValue::Integer(n) = arg {
+            sub -= n;
+        }
+    }
+
+    ScmValue::Integer(sub)
+});
+
 // TODO: - * /
 
 pub const SCM_BUILTIN_ABS: ScmCallable = ScmCallable::Builtin(|_, args| -> ScmValue {
