@@ -1,4 +1,7 @@
-use crate::{engine::scm_is_true, VariablesSet};
+use crate::{
+    engine::{scm_builtins::*, scm_is_true},
+    VariablesSet,
+};
 use core::fmt;
 
 #[derive(Clone)]
@@ -169,9 +172,21 @@ pub fn exec_callable(
 
 impl ScmExecContext {
     pub fn new() -> ScmExecContext {
-        return ScmExecContext {
+        let mut ctx = Self {
             variables: VariablesSet::new(),
         };
+
+        ctx.add_or_assign_var("+", SCM_BUILTIN_ADD);
+        ctx.add_or_assign_var("-", SCM_BUILTIN_SUB);
+        ctx.add_or_assign_var("newline", SCM_BUILTIN_NEWLINE);
+        ctx.add_or_assign_var("display", SCM_BUILTIN_DISPLAY);
+        ctx.add_or_assign_var("list", SCM_BUILTIN_LIST);
+        ctx.add_or_assign_var("apply", SCM_BUILTIN_APPLY);
+        ctx.add_or_assign_var("cons", SCM_BUILTIN_CONS);
+        ctx.add_or_assign_var("car", SCM_BUILTIN_CAR);
+        ctx.add_or_assign_var("cdr", SCM_BUILTIN_CDR);
+
+        ctx
     }
 
     pub fn add_or_assign_var(&mut self, name: &str, val: ScmValue) {

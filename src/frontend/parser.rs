@@ -43,7 +43,6 @@ impl Parser {
 
     fn gen_define(&mut self) {
         self.next(); // "define"
-        
 
         match self.peek() {
             Token::Identifier(ident) => {
