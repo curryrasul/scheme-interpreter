@@ -34,7 +34,7 @@ pub enum ScmProcUnit {
     // Used only as element of procedure's stack
     Val(ScmValue),
     Variable(String),
-    ProcCall(ScmCallable, usize),
+    ProcCall(String, usize),    // Name and args cnt
     Lambda { args: Vec<String>, units_cnt: usize },
     TrueBranch(usize),        // Skip size
     FalseBranch(usize),       // Skip size
@@ -42,7 +42,7 @@ pub enum ScmProcUnit {
 }
 
 pub struct ScmExecContext {
-    variables: VariablesSet<ScmValue>,
+    pub variables: VariablesSet<ScmValue>,
 }
 
 fn find_arg(name: &String, args: &[ScmValue], args_names: &[String]) -> Option<ScmValue> {
@@ -78,20 +78,29 @@ fn exec_custom_proc(
                 stack.push(var.unwrap());
             }
 
-            ScmProcUnit::ProcCall(proc, args_cnt) => {
+            ScmProcUnit::ProcCall(proc_name, args_cnt) => {
                 let mut args = Vec::<ScmValue>::new();
                 for _ in 0..*args_cnt {
                     args.push(stack.pop().unwrap())
                 }
 
-                let res = match proc {
-                    ScmCallable::Builtin(func) => (func)(ctx, &args),
-                    ScmCallable::CustomProc(proc) => {
-                        exec_callable(ctx, ScmCallable::CustomProc(proc.clone()), &args)
-                    }
-                };
+                let var = find_arg(proc_name, call_args, &proc.params)
+                    .or_else(|| ctx.variables.find_var(&proc_name));
+                assert!(!var.is_none(), "Unknown procedure: {}", proc_name);
 
-                stack.push(res);
+                if let ScmValue::Procedure(proc) = var.unwrap() {
+                    let res = match proc {
+                        ScmCallable::Builtin(func) => (func)(ctx, &args),
+                        ScmCallable::CustomProc(proc) => {
+                            exec_callable(ctx, ScmCallable::CustomProc(proc.clone()), &args)
+                        }
+                    };
+
+                    stack.push(res);
+                }
+                else {
+                    panic!("Variable cannot be called: {}", proc_name);
+                }
             }
 
             ScmProcUnit::Lambda { args, units_cnt } => {
