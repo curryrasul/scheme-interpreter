@@ -1,3 +1,5 @@
+use std::vec;
+
 use crate::{engine::*, frontend::lex::*};
 
 pub struct Parser {
@@ -42,8 +44,6 @@ impl Parser {
     }
 
     fn gen_define(&mut self) {
-        self.next(); // "define"
-
         match self.peek() {
             Token::Identifier(ident) => {
                 self.instr.push(ScmProcUnit::Assign(String::from(ident)));
@@ -86,6 +86,35 @@ impl Parser {
         };
     }
 
+    fn gen_lambda(&mut self) {
+        let params = if let Token::Identifier(ident) = self.peek() {
+            vec![ident]
+        } else if let Token::OpenParen = self.peek() {
+            self.next();
+
+            let mut res = Vec::new();
+            while let Token::Identifier(param) = self.peek() {
+                res.push(param);
+                self.next();
+            }
+
+            assert!(matches!(self.next(), Token::ClosingParen));
+
+            res
+        } else {
+            panic!("Formals expected");
+        };
+
+        let start_idx = self.instr.len();
+        self.parse_value();
+        let lambda_size = self.instr.len() - start_idx;
+
+        self.instr.push(ScmProcUnit::Lambda {
+            args: params,
+            units_cnt: lambda_size,
+        });
+    }
+
     fn parse_expr(&mut self) {
         assert!(matches!(self.next(), Token::OpenParen));
 
@@ -95,6 +124,7 @@ impl Parser {
         // Get first element (callable)
         match self.peek() {
             Token::Identifier(var) if var == "define" => {
+                self.next();
                 self.instr.push(ScmProcUnit::Val(ScmValue::Nil));
                 self.gen_define();
                 assert!(matches!(self.next(), Token::ClosingParen));
@@ -102,7 +132,10 @@ impl Parser {
             }
 
             Token::Identifier(var) if var == "lambda" => {
-                todo!()
+                self.next();
+                self.gen_lambda();
+                assert!(matches!(self.next(), Token::ClosingParen));
+                return;
             }
 
             Token::Identifier(var) if var == "if" => {
