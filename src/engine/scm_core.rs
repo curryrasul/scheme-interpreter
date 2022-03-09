@@ -32,7 +32,7 @@ pub struct ScmProcedure {
     pub instructions: Vec<ScmProcUnit>,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum ScmProcUnit {
     // Used only as element of procedure's stack
     Val(ScmValue),
@@ -143,7 +143,7 @@ fn exec_custom_proc(
             }
 
             ScmProcUnit::FalseBranch(skip_cnt) => {
-                stack.pop();
+                iter.next();
                 for _ in 0..*skip_cnt {
                     iter.next();
                 }

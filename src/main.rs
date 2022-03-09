@@ -35,6 +35,13 @@ fn gen_test_code3() -> ScmProcedure {
     };
 }
 
+#[allow(unused)]
+fn print_proc(proc: &ScmProcedure) {
+    for instr in &proc.instructions {
+        println!("{:?}", instr);
+    }
+}
+
 fn main() {
     // let args: Vec<String> = std::env::args().collect();
 
@@ -48,9 +55,15 @@ fn main() {
     let mut ctx = ScmExecContext::new();
     // let mut parser = Parser::new(&code);
 
-    let mut parser = Parser::new("(display (+ (- 3 2) 2)) (newline) (display 666)");
+    // let mut parser = Parser::new("(display (+ (- 3 2) 2)) (newline) (display 666)");
+    let mut parser = Parser::new("(if #f (display 142) (display 666))");
     // let callable = ScmCallable::CustomProc(gen_test_code3());
     let callables = parser.parse();
+
+    // if let ScmCallable::CustomProc(proc) = &callables[0] {
+    //     print_proc(proc);
+    // }
+
     for callable in callables.iter() {
         exec_callable(&mut ctx, callable.clone(), &Vec::new());
     }

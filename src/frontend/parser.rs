@@ -5,7 +5,6 @@ use crate::{engine::*, frontend::lex::*};
 pub struct Parser {
     tokens: Vec<Token>,
     idx: usize,
-    instr: Vec<ScmProcUnit>,
 }
 
 impl Parser {
@@ -24,18 +23,18 @@ impl Parser {
 
     // Parsing
 
-    fn parse_value(&mut self) {
+    fn parse_value(&mut self, instr: &mut Vec<ScmProcUnit>) {
         match self.peek() {
             Token::Identifier(ident) => {
-                self.instr.push(ScmProcUnit::Variable(ident));
+                instr.push(ScmProcUnit::Variable(ident));
                 self.next();
             }
             Token::Value(val) => {
-                self.instr.push(ScmProcUnit::Val(val));
+                instr.push(ScmProcUnit::Val(val));
                 self.next();
             }
             Token::OpenParen => {
-                self.parse_expr();
+                self.parse_expr(instr);
             }
             _ => {
                 panic!("Unexpected symbol");
@@ -43,21 +42,21 @@ impl Parser {
         }
     }
 
-    fn gen_define(&mut self) {
+    fn gen_define(&mut self, instr: &mut Vec<ScmProcUnit>) {
         match self.peek() {
             Token::Identifier(ident) => {
-                self.instr.push(ScmProcUnit::Assign(String::from(ident)));
+                instr.push(ScmProcUnit::Assign(String::from(ident)));
                 self.next();
 
                 // Get one value. If there are others, error will be raised later.
-                self.parse_value();
+                self.parse_value(instr);
             }
 
             Token::OpenParen => {
                 self.next();
 
                 if let Token::Identifier(ident) = self.peek() {
-                    self.instr.push(ScmProcUnit::Assign(String::from(ident)));
+                    instr.push(ScmProcUnit::Assign(String::from(ident)));
                 } else {
                     panic!("Expected procedure name");
                 }
@@ -70,11 +69,11 @@ impl Parser {
                 }
                 assert!(matches!(self.next(), Token::ClosingParen));
 
-                let start_idx = self.instr.len();
-                self.parse_expr();
-                let lambda_size = self.instr.len() - start_idx;
+                let start_idx = instr.len();
+                self.parse_expr(instr);
+                let lambda_size = instr.len() - start_idx;
 
-                self.instr.push(ScmProcUnit::Lambda {
+                instr.push(ScmProcUnit::Lambda {
                     args: params,
                     units_cnt: lambda_size,
                 });
@@ -86,7 +85,7 @@ impl Parser {
         };
     }
 
-    fn gen_lambda(&mut self) {
+    fn gen_lambda(&mut self, instr: &mut Vec<ScmProcUnit>) {
         let params = if let Token::Identifier(ident) = self.peek() {
             vec![ident]
         } else if let Token::OpenParen = self.peek() {
@@ -105,17 +104,47 @@ impl Parser {
             panic!("Formals expected");
         };
 
-        let start_idx = self.instr.len();
-        self.parse_value();
-        let lambda_size = self.instr.len() - start_idx;
+        let start_idx = instr.len();
+        self.parse_value(instr);
+        let lambda_size = instr.len() - start_idx;
 
-        self.instr.push(ScmProcUnit::Lambda {
+        instr.push(ScmProcUnit::Lambda {
             args: params,
             units_cnt: lambda_size,
         });
     }
 
-    fn parse_expr(&mut self) {
+    fn gen_condif(&mut self, instr: &mut Vec<ScmProcUnit>) {
+        let mut cond_instr = Vec::new();
+        self.parse_value(&mut cond_instr);
+
+        let mut true_instr = Vec::new();
+        self.parse_value(&mut true_instr);
+
+        let has_else = !matches!(self.peek(), Token::ClosingParen);
+        if has_else {
+            let start_idx = instr.len();
+            self.parse_value(instr);
+            let fbr_size = instr.len() - start_idx;
+            instr.push(ScmProcUnit::FalseBranch(fbr_size));
+        }
+        else {
+            instr.push(ScmProcUnit::Val(ScmValue::Nil));
+            instr.push(ScmProcUnit::FalseBranch(1));
+        }
+
+        let tbr_size = true_instr.len() + 1;
+        for unit in true_instr.iter() {
+            instr.push(unit.clone());
+        }
+        instr.push(ScmProcUnit::TrueBranch(tbr_size));
+
+        for unit in cond_instr.iter() {
+            instr.push(unit.clone());
+        }
+    }
+
+    fn parse_expr(&mut self, instr: &mut Vec<ScmProcUnit>) {
         assert!(matches!(self.next(), Token::OpenParen));
 
         let mut header_idx = None;
@@ -125,55 +154,54 @@ impl Parser {
         match self.peek() {
             Token::Identifier(var) if var == "define" => {
                 self.next();
-                self.instr.push(ScmProcUnit::Val(ScmValue::Nil));
-                self.gen_define();
+                instr.push(ScmProcUnit::Val(ScmValue::Nil));
+                self.gen_define(instr);
                 assert!(matches!(self.next(), Token::ClosingParen));
                 return;
             }
 
             Token::Identifier(var) if var == "lambda" => {
                 self.next();
-                self.gen_lambda();
+                self.gen_lambda(instr);
                 assert!(matches!(self.next(), Token::ClosingParen));
                 return;
             }
 
             Token::Identifier(var) if var == "if" => {
-                todo!()
+                self.next();
+                self.gen_condif(instr);
+                assert!(matches!(self.next(), Token::ClosingParen));
+                return;
             }
 
             Token::Identifier(var) => {
-                header_idx = Some(self.instr.len());
+                header_idx = Some(instr.len());
                 args_cnt = 0;
-                self.instr.push(ScmProcUnit::ProcCall(var, 666));
+                instr.push(ScmProcUnit::ProcCall(var, 666));
                 self.next();
             }
 
             Token::Value(val) => {
-                self.instr
-                    .push(ScmProcUnit::ProcCall(String::from("apply"), 2));
-                self.instr.push(ScmProcUnit::Val(val));
+                instr.push(ScmProcUnit::ProcCall(String::from("apply"), 2));
+                instr.push(ScmProcUnit::Val(val));
 
-                header_idx = Some(self.instr.len());
+                header_idx = Some(instr.len());
                 args_cnt = 0;
-                self.instr
-                    .push(ScmProcUnit::ProcCall(String::from("list"), 666));
+                instr.push(ScmProcUnit::ProcCall(String::from("list"), 666));
                 self.next();
             }
 
             Token::OpenParen => {
-                self.instr
-                    .push(ScmProcUnit::ProcCall(String::from("apply"), 2));
-                self.parse_expr(); // Consumed here
+                instr.push(ScmProcUnit::ProcCall(String::from("apply"), 2));
+                self.parse_expr(instr); // Consumed here
 
-                header_idx = Some(self.instr.len());
+                header_idx = Some(instr.len());
                 args_cnt = 0;
-                self.instr
-                    .push(ScmProcUnit::ProcCall(String::from("list"), 666));
+                instr.push(ScmProcUnit::ProcCall(String::from("list"), 666));
             }
 
             Token::ClosingParen => {
-                self.instr.push(ScmProcUnit::Val(ScmValue::Nil));
+                instr.push(ScmProcUnit::Val(ScmValue::Nil));
             }
 
             Token::Sentiel => {
@@ -191,14 +219,14 @@ impl Parser {
                     panic!("Unexpected EOF");
                 }
                 _ => {
-                    self.parse_value();
+                    self.parse_value(instr);
                 }
             };
             args_cnt += 1;
         }
 
         if let Some(idx) = header_idx {
-            if let ScmProcUnit::ProcCall(_, cnt) = &mut self.instr[idx] {
+            if let ScmProcUnit::ProcCall(_, cnt) = &mut instr[idx] {
                 *cnt = args_cnt;
             } else {
                 panic!("WTF");
@@ -212,12 +240,13 @@ impl Parser {
         let mut res = Vec::new();
 
         while let Token::OpenParen = self.peek() {
-            self.parse_expr();
+            let mut instr = Vec::new();
+
+            self.parse_expr(&mut instr);
             res.push(ScmCallable::CustomProc(ScmProcedure {
                 params: Vec::<String>::new(),
-                instructions: self.instr.clone(),
+                instructions: instr,
             }));
-            self.instr.clear();
         }
 
         assert!(matches!(self.peek(), Token::Sentiel));
@@ -227,11 +256,7 @@ impl Parser {
 
     pub fn new(s: &str) -> Self {
         let tokens = Lexer::new(s).run();
-        Self {
-            tokens: tokens,
-            idx: 0,
-            instr: Vec::new(),
-        }
+        Self { tokens, idx: 0 }
     }
 }
 
