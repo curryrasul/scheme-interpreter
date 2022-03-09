@@ -44,10 +44,19 @@ impl Lexer {
                     self.tokens.push(Token::ClosingParen);
                     self.increment();
                 }
-                '#' => self.parse_boolean(),
+                '#' => {
+                    self.increment();
+                    match self.current {
+                        Some('\'') => self.parse_char(),
+                        _ => self.parse_boolean(),
+                    }
+                }
                 '0'..='9' => self.parse_number(),
                 '\"' => self.parse_string(),
-                _ => unreachable!(),
+                '[' | ']' | '{' | '}' | '|' | '\\' => {
+                    panic!("Unexpected {} {}", self.line, self.column);
+                }
+                _ => self.parse_identifier(),
             }
         }
 
@@ -84,11 +93,25 @@ impl Lexer {
         self.parse_delimiter();
     }
 
-    // fn parse_identifier(&mut self) {}
+    fn parse_identifier(&mut self) {
+        let mut s = String::new();
+
+        while let Some(c) = self.current {
+            match c {
+                ' ' | '(' | ')' | '\n' => break,
+                _ => {
+                    s.push(c);
+                    self.increment();
+                }
+            }
+        }
+
+        self.tokens.push(Token::Identifier(s));
+
+        self.parse_delimiter();
+    }
 
     fn parse_boolean(&mut self) {
-        self.increment();
-
         let val;
 
         match self.current {
@@ -127,13 +150,26 @@ impl Lexer {
         self.parse_delimiter();
     }
 
+    fn parse_char(&mut self) {
+        self.increment();
+
+        match self.current {
+            Some(c @ 'a'..='z') => self.tokens.push(Token::Value(ScmValue::Char(c))),
+            _ => panic!("Lexer error on {} {}", self.line, self.column),
+        }
+
+        self.increment();
+
+        self.parse_delimiter();
+    }
+
     fn parse_delimiter(&mut self) {
         match self.current {
             Some(')') => {
                 self.tokens.push(Token::ClosingParen);
                 self.increment();
             }
-            Some(' ') | None => (),
+            Some(' ') | Some('\n') | None => (),
             Some(_) => panic!("Lexer error on {} {}", self.line, self.column),
         }
     }
@@ -142,13 +178,15 @@ impl Lexer {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
 
     #[test]
     fn test() {
-        let mut l = Lexer::new("( 123 500 #t #f () \" Hi \" ())");
+        let contents = fs::read_to_string("test.scm").expect("No such file");
+        let mut l = Lexer::new(&contents);
 
         let v = l.run();
 
-        println!("{:?}", v);
+        println!("{:#?}", v);
     }
 }
