@@ -28,9 +28,19 @@ impl Parser {
 
         // Get first element (callable)
         match self.peek() {
-            Token::Identifier(var) => {
-                // TODO: spec
+            Token::Identifier(var) if var == "define" => {
+                todo!()
+            }
 
+            Token::Identifier(var) if var == "lambda" => {
+                todo!()
+            }
+
+            Token::Identifier(var) if var == "if" => {
+                todo!()
+            }
+
+            Token::Identifier(var) => {
                 header_idx = Some(self.instr.len());
                 args_cnt = 0;
                 self.instr.push(ScmProcUnit::ProcCall(var, 666));
@@ -108,18 +118,21 @@ impl Parser {
         assert!(matches!(self.next(), Token::ClosingParen));
     }
 
-    pub fn parse(&mut self) -> ScmCallable {
+    pub fn parse(&mut self) -> Vec<ScmCallable> {
+        let mut res = Vec::new();
+
         while let Token::OpenParen = self.peek() {
             self.parse_expr();
+            res.push(ScmCallable::CustomProc(ScmProcedure {
+                params: Vec::<String>::new(),
+                instructions: self.instr.clone(),
+            }));
+            self.instr.clear();
         }
 
         assert!(matches!(self.peek(), Token::Sentiel));
 
-        let proc = ScmProcedure {
-            params: Vec::<String>::new(),
-            instructions: self.instr.clone(),
-        };
-        ScmCallable::CustomProc(proc)
+        res
     }
 
     pub fn new(s: &str) -> Self {

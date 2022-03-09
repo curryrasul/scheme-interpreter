@@ -92,6 +92,7 @@ fn main() {
     let mut ctx = ScmExecContext::new();
 
     ctx.add_or_assign_var("+", SCM_BUILTIN_ADD);
+    ctx.add_or_assign_var("-", SCM_BUILTIN_SUB);
     ctx.add_or_assign_var("newline", SCM_BUILTIN_NEWLINE);
     ctx.add_or_assign_var("display", SCM_BUILTIN_DISPLAY);
     ctx.add_or_assign_var("list", SCM_BUILTIN_LIST);
@@ -100,8 +101,11 @@ fn main() {
     ctx.add_or_assign_var("car", SCM_BUILTIN_CAR);
     ctx.add_or_assign_var("cdr", SCM_BUILTIN_CDR);
 
-    let mut parser = Parser::new("(display (+ 1 2))");
-    let callable = parser.parse();
+    let mut parser = Parser::new("(display (+ (- 3 2) 2)) (newline) (display 666)");
     // let callable = ScmCallable::CustomProc(gen_test_code3());
-    exec_callable(&mut ctx, callable, &Vec::new());
+    let callables = parser.parse();
+    for callable in callables.iter() {
+        exec_callable(&mut ctx, callable.clone(), &Vec::new());
+    }
+    println!();
 }
