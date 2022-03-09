@@ -12,7 +12,7 @@ impl<T: Clone> NamedArgsList<T> {
         return self.args[ind].1.clone();
     }
 
-    pub fn find_by_name(&self, name: &String) -> Option<T> {
+    pub fn find_by_name(&self, name: &str) -> Option<T> {
         for arg in self.args.iter() {
             if arg.0 == *name {
                 return Some(arg.1.clone());
@@ -50,7 +50,7 @@ impl<T: Clone> VariablesSet<T> {
         return res;
     }
 
-    pub fn find_var(&self, name: &String) -> Option<T> {
+    pub fn find_var(&self, name: &str) -> Option<T> {
         for container in self.sets.iter().rev() {
             let val = container.find_by_name(name);
             if val.is_some() {
@@ -60,7 +60,7 @@ impl<T: Clone> VariablesSet<T> {
         return None;
     }
 
-    pub fn add_or_assign_var(&mut self, name: &String, val: T) {
+    pub fn add_or_assign_var(&mut self, name: &str, val: T) {
         let cur_set: &mut NamedArgsList<T> = self.sets.last_mut().unwrap();
         for mut var in cur_set.args.iter_mut() {
             if var.0 == *name {
@@ -68,7 +68,7 @@ impl<T: Clone> VariablesSet<T> {
                 return;
             }
         }
-        cur_set.args.push((name.clone(), val));
+        cur_set.args.push((String::from(name), val));
     }
 
     pub fn add_set(&mut self, container: NamedArgsList<T>) {
