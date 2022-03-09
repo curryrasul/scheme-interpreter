@@ -106,14 +106,78 @@ pub const SCM_BUILTIN_SUB: ScmCallable = ScmCallable::Builtin(|_, args| -> ScmVa
 
     for arg in iterator {
         if let ScmValue::Integer(n) = arg {
-            sub -= n;
+            sub -= *n;
         }
     }
 
     ScmValue::Integer(sub)
 });
 
-// TODO: - * /
+pub const SCM_BUILTIN_MUL: ScmCallable = ScmCallable::Builtin(|_, args| -> ScmValue {
+    if args.len() == 0 {
+        return ScmValue::Integer(0);
+    }
+
+    if args.len() == 1 {
+        if let ScmValue::Integer(n) = args[0] {
+            return ScmValue::Integer(n);
+        }
+    }
+
+    for arg in args.iter() {
+        match *arg {
+            ScmValue::Integer(_) => (),
+            _ => panic!("Unsupported value"),
+        }
+    }
+
+    let mut mul = 1;
+    for arg in args {
+        if let ScmValue::Integer(n) = arg {
+            mul *= *n;
+        }
+    }
+
+    ScmValue::Integer(mul)
+});
+
+pub const SCM_BUILTIN_DIV: ScmCallable = ScmCallable::Builtin(|_, args| -> ScmValue {
+    if args.len() == 0 {
+        return ScmValue::Integer(0);
+    }
+
+    if args.len() == 1 {
+        if let ScmValue::Integer(n) = args[0] {
+            if n == 0 {
+                panic!("Division by zero")
+            }
+            return ScmValue::Integer(1 / n);
+        }
+    }
+
+    for arg in args.iter() {
+        match *arg {
+            ScmValue::Integer(_) => (),
+            _ => panic!("Unsupported value"),
+        }
+    }
+
+    let mut iterator = args.iter();
+    let mut numerator = 1;
+    let mut denominator = 1;
+
+    if let ScmValue::Integer(n) = iterator.next().unwrap() {
+        numerator = *n;
+    }
+
+    for arg in iterator {
+        if let ScmValue::Integer(n) = arg {
+            denominator *= *n;
+        }
+    }
+
+    ScmValue::Integer(numerator / denominator)
+});
 
 pub const SCM_BUILTIN_ABS: ScmCallable = ScmCallable::Builtin(|_, args| -> ScmValue {
     assert!(args.len() == 1, "ABS requires exactly 1 argument");
