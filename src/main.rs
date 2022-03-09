@@ -91,28 +91,14 @@ fn gen_test_code3() -> ScmProcedure {
 fn main() {
     let mut ctx = ScmExecContext::new();
 
-    ctx.variables
-        .add_or_assign_var(&String::from("+"), ScmValue::Procedure(SCM_BUILTIN_ADD));
-    ctx.variables.add_or_assign_var(
-        &String::from("newline"),
-        ScmValue::Procedure(SCM_BUILTIN_NEWLINE),
-    );
-    ctx.variables.add_or_assign_var(
-        &String::from("display"),
-        ScmValue::Procedure(SCM_BUILTIN_DISPLAY),
-    );
-    ctx.variables
-        .add_or_assign_var(&String::from("list"), ScmValue::Procedure(SCM_BUILTIN_LIST));
-    ctx.variables.add_or_assign_var(
-        &String::from("apply"),
-        ScmValue::Procedure(SCM_BUILTIN_APPLY),
-    );
-    ctx.variables
-        .add_or_assign_var(&String::from("cons"), ScmValue::Procedure(SCM_BUILTIN_CONS));
-    ctx.variables
-        .add_or_assign_var(&String::from("car"), ScmValue::Procedure(SCM_BUILTIN_CAR));
-    ctx.variables
-        .add_or_assign_var(&String::from("cdr"), ScmValue::Procedure(SCM_BUILTIN_CDR));
+    ctx.add_or_assign_var("+", SCM_BUILTIN_ADD);
+    ctx.add_or_assign_var("newline", SCM_BUILTIN_NEWLINE);
+    ctx.add_or_assign_var("display", SCM_BUILTIN_DISPLAY);
+    ctx.add_or_assign_var("list", SCM_BUILTIN_LIST);
+    ctx.add_or_assign_var("apply", SCM_BUILTIN_APPLY);
+    ctx.add_or_assign_var("cons", SCM_BUILTIN_CONS);
+    ctx.add_or_assign_var("car", SCM_BUILTIN_CAR);
+    ctx.add_or_assign_var("cdr", SCM_BUILTIN_CDR);
 
     let mut parser = Parser::new("(display (+ 1 2))");
     let callable = parser.parse();

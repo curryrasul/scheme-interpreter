@@ -172,6 +172,10 @@ impl ScmExecContext {
             variables: VariablesSet::new(),
         };
     }
+
+    pub fn add_or_assign_var(&mut self, name: &str, val: ScmValue) {
+        self.variables.add_or_assign_var(&String::from(name), val);
+    }
 }
 
 impl fmt::Debug for ScmValue {

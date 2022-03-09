@@ -1,7 +1,4 @@
-use crate::{
-    frontend::lex::*,
-    engine::*
-};
+use crate::{engine::*, frontend::lex::*};
 
 pub struct Parser {
     tokens: Vec<Token>,
