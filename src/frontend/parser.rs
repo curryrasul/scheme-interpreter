@@ -20,6 +20,73 @@ impl Parser {
         res
     }
 
+    // Parsing
+
+    fn parse_value(&mut self) {
+        match self.peek() {
+            Token::Identifier(ident) => {
+                self.instr.push(ScmProcUnit::Variable(ident));
+                self.next();
+            }
+            Token::Value(val) => {
+                self.instr.push(ScmProcUnit::Val(val));
+                self.next();
+            }
+            Token::OpenParen => {
+                self.parse_expr();
+            }
+            _ => {
+                panic!("Unexpected symbol");
+            }
+        }
+    }
+
+    fn gen_define(&mut self) {
+        self.next(); // "define"
+        
+
+        match self.peek() {
+            Token::Identifier(ident) => {
+                self.instr.push(ScmProcUnit::Assign(String::from(ident)));
+                self.next();
+
+                // Get one value. If there are others, error will be raised later.
+                self.parse_value();
+            }
+
+            Token::OpenParen => {
+                self.next();
+
+                if let Token::Identifier(ident) = self.peek() {
+                    self.instr.push(ScmProcUnit::Assign(String::from(ident)));
+                } else {
+                    panic!("Expected procedure name");
+                }
+                self.next();
+
+                let mut params = Vec::new();
+                while let Token::Identifier(ident) = self.peek() {
+                    params.push(ident);
+                    self.next();
+                }
+                assert!(matches!(self.next(), Token::ClosingParen));
+
+                let start_idx = self.instr.len();
+                self.parse_expr();
+                let lambda_size = self.instr.len() - start_idx;
+
+                self.instr.push(ScmProcUnit::Lambda {
+                    args: params,
+                    units_cnt: lambda_size,
+                });
+            }
+
+            _ => {
+                panic!("Unexpected symbol");
+            }
+        };
+    }
+
     fn parse_expr(&mut self) {
         assert!(matches!(self.next(), Token::OpenParen));
 
@@ -29,7 +96,10 @@ impl Parser {
         // Get first element (callable)
         match self.peek() {
             Token::Identifier(var) if var == "define" => {
-                todo!()
+                self.instr.push(ScmProcUnit::Val(ScmValue::Nil));
+                self.gen_define();
+                assert!(matches!(self.next(), Token::ClosingParen));
+                return;
             }
 
             Token::Identifier(var) if var == "lambda" => {
@@ -82,26 +152,14 @@ impl Parser {
         // Arguments
         loop {
             match self.peek() {
-                Token::Identifier(var) => {
-                    self.instr.push(ScmProcUnit::Variable(var));
-                    self.next();
-                }
-
-                Token::Value(val) => {
-                    self.instr.push(ScmProcUnit::Val(val));
-                    self.next();
-                }
-
-                Token::OpenParen => {
-                    self.parse_expr();
-                }
-
                 Token::ClosingParen => {
                     break;
                 }
-
                 Token::Sentiel => {
-                    panic!("");
+                    panic!("Unexpected EOF");
+                }
+                _ => {
+                    self.parse_value();
                 }
             };
             args_cnt += 1;
@@ -145,14 +203,14 @@ impl Parser {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+// #[cfg(test)]
+// mod tests {
+//     use super::*;
 
-    #[test]
-    fn test() {
-        let p = Parser::new("(+ 1 2)");
+//     #[test]
+//     fn test() {
+//         // let p = Parser::new("(+ 1 2)");
 
-        // println!("{:?}", p);
-    }
-}
+//         // println!("{:?}", p);
+//     }
+// }

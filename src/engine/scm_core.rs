@@ -36,9 +36,9 @@ pub enum ScmProcUnit {
     Variable(String),
     ProcCall(String, usize), // Name and args cnt
     Lambda { args: Vec<String>, units_cnt: usize },
-    TrueBranch(usize),        // Skip size
-    FalseBranch(usize),       // Skip size
-    Assign(String, ScmValue), // Define and assign are same here
+    TrueBranch(usize),  // Skip size
+    FalseBranch(usize), // Skip size
+    Assign(String),     // Define and assign are same here
 }
 
 pub struct ScmExecContext {
@@ -146,8 +146,9 @@ fn exec_custom_proc(
                 }
             }
 
-            ScmProcUnit::Assign(name, val) => {
-                ctx.variables.add_or_assign_var(name, val.clone());
+            ScmProcUnit::Assign(name) => {
+                let val = stack.pop().unwrap();
+                ctx.variables.add_or_assign_var(name, val);
             }
         }
     }
