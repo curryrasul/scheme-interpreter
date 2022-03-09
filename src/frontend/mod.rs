@@ -1,4 +1,4 @@
 mod lex;
 mod parser;
 
-pub fn parse() {}
+pub use parser::Parser;

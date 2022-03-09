@@ -114,8 +114,8 @@ fn main() {
     ctx.variables
         .add_or_assign_var(&String::from("cdr"), ScmValue::Procedure(SCM_BUILTIN_CDR));
 
-    let proc = gen_test_code3();
-
-    let callable = ScmCallable::CustomProc(proc);
+    let mut parser = Parser::new("(display (+ 1 2))");
+    let callable = parser.parse();
+    // let callable = ScmCallable::CustomProc(gen_test_code3());
     exec_callable(&mut ctx, callable, &Vec::new());
 }
