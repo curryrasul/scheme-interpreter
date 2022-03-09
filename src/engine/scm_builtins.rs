@@ -115,7 +115,7 @@ pub const SCM_BUILTIN_SUB: ScmCallable = ScmCallable::Builtin(|_, args| -> ScmVa
 
 pub const SCM_BUILTIN_MUL: ScmCallable = ScmCallable::Builtin(|_, args| -> ScmValue {
     if args.len() == 0 {
-        return ScmValue::Integer(0);
+        return ScmValue::Integer(1);
     }
 
     if args.len() == 1 {
@@ -143,7 +143,7 @@ pub const SCM_BUILTIN_MUL: ScmCallable = ScmCallable::Builtin(|_, args| -> ScmVa
 
 pub const SCM_BUILTIN_DIV: ScmCallable = ScmCallable::Builtin(|_, args| -> ScmValue {
     if args.len() == 0 {
-        return ScmValue::Integer(0);
+        return ScmValue::Integer(1);
     }
 
     if args.len() == 1 {
