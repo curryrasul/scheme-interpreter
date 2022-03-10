@@ -116,8 +116,11 @@ fn exec_custom_proc(
                             } else {
                                 let var = find_arg(name, call_args, &proc.params)
                                     .or_else(|| ctx.variables.find_var(&name));
-                                assert!(!var.is_none(), "Unknown variable: {}", name);
-                                ScmProcUnit::Val(var.unwrap())
+                                // assert!(!var.is_none(), "Unknown variable: {}", name);
+                                match var {
+                                    None => unit.clone(),
+                                    Some(_) => ScmProcUnit::Val(var.unwrap()),
+                                }
                             }
                         }
 
