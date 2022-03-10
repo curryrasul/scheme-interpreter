@@ -60,6 +60,15 @@ fn find_arg(name: &String, args: &[ScmValue], args_names: &[String]) -> Option<S
     return res;
 }
 
+fn find_var(
+    name: &String,
+    args: &[ScmValue],
+    args_names: &[String],
+    ctx: &mut ScmExecContext,
+) -> Option<ScmValue> {
+    find_arg(name, args, args_names).or_else(|| ctx.variables.find_var(&name))
+}
+
 fn exec_custom_proc(
     ctx: &mut ScmExecContext,
     proc: ScmProcedure,
@@ -75,8 +84,7 @@ fn exec_custom_proc(
             }
 
             ScmProcUnit::Variable(name) => {
-                let var = find_arg(name, call_args, &proc.params)
-                    .or_else(|| ctx.variables.find_var(&name));
+                let var = find_var(name, call_args, &proc.params, ctx);
                 assert!(!var.is_none(), "Unknown variable: {}", name);
                 stack.push(var.unwrap());
             }
@@ -87,8 +95,7 @@ fn exec_custom_proc(
                     args.push(stack.pop().unwrap())
                 }
 
-                let var = find_arg(proc_name, call_args, &proc.params)
-                    .or_else(|| ctx.variables.find_var(&proc_name));
+                let var = find_var(proc_name, call_args, &proc.params, ctx);
                 assert!(!var.is_none(), "Unknown procedure: {}", proc_name);
 
                 if let ScmValue::Procedure(proc) = var.unwrap() {
@@ -114,9 +121,7 @@ fn exec_custom_proc(
                             if args.iter().any(|it| name == it) {
                                 unit.clone()
                             } else {
-                                let var = find_arg(name, call_args, &proc.params)
-                                    .or_else(|| ctx.variables.find_var(&name));
-                                // assert!(!var.is_none(), "Unknown variable: {}", name);
+                                let var = find_var(name, call_args, &proc.params, ctx);
                                 match var {
                                     None => unit.clone(),
                                     Some(_) => ScmProcUnit::Val(var.unwrap()),

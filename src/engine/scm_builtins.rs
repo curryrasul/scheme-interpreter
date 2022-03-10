@@ -1,4 +1,7 @@
-use crate::{scm_core::*, scm_get_float, scm_list_len, scm_list_to_vec, scm_utils::scm_is_list, scm_get_integer};
+use crate::{
+    scm_core::*, scm_get_float, scm_get_integer, scm_list_len, scm_list_to_vec,
+    scm_utils::scm_is_list,
+};
 
 // System
 
@@ -42,13 +45,13 @@ pub const SCM_BUILTIN_NEWLINE: ScmValue =
 
 // Arithmetics
 
-pub const SCM_BUILTIN_EQ: ScmValue = 
+pub const SCM_BUILTIN_EQ: ScmValue =
     ScmValue::Procedure(ScmCallable::Builtin(|_, args| -> ScmValue {
         assert!(args.len() == 2);
 
         let first = scm_get_integer(&args[0]).unwrap();
         let second = scm_get_integer(&args[1]).unwrap();
-        
+
         ScmValue::Bool(first == second)
     }));
 
@@ -221,8 +224,12 @@ pub const SCM_BUILTIN_LE: ScmValue =
             }
         }
 
-        let v1 = scm_get_float(&args[0]).or_else(|| panic!("LE requires numbers")).unwrap();
-        let v2 = scm_get_float(&args[1]).or_else(|| panic!("LE requires numbers")).unwrap();
+        let v1 = scm_get_float(&args[0])
+            .or_else(|| panic!("LE requires numbers"))
+            .unwrap();
+        let v2 = scm_get_float(&args[1])
+            .or_else(|| panic!("LE requires numbers"))
+            .unwrap();
         ScmValue::Bool(v1 < v2)
     }));
 
