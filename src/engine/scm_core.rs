@@ -181,6 +181,7 @@ impl ScmExecContext {
         ctx.add_or_assign_var("*", SCM_BUILTIN_MUL);
         ctx.add_or_assign_var("/", SCM_BUILTIN_DIV);
         ctx.add_or_assign_var("<", SCM_BUILTIN_LE);
+        ctx.add_or_assign_var("=", SCM_BUILTIN_EQ);
         ctx.add_or_assign_var("newline", SCM_BUILTIN_NEWLINE);
         ctx.add_or_assign_var("display", SCM_BUILTIN_DISPLAY);
         ctx.add_or_assign_var("list", SCM_BUILTIN_LIST);

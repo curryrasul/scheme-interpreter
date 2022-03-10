@@ -1,4 +1,4 @@
-(define (fact x)
-  (if (< x 2)
-      1
-      (* (fact (- x 1)) x)))
+
+(define (adder x) (lambda (y) (+ x y)))
+
+(display (adder 5))

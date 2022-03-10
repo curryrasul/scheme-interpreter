@@ -1,4 +1,4 @@
-use crate::{scm_core::*, scm_get_float, scm_list_len, scm_list_to_vec, scm_utils::scm_is_list};
+use crate::{scm_core::*, scm_get_float, scm_list_len, scm_list_to_vec, scm_utils::scm_is_list, scm_get_integer};
 
 // System
 
@@ -41,6 +41,16 @@ pub const SCM_BUILTIN_NEWLINE: ScmValue =
     }));
 
 // Arithmetics
+
+pub const SCM_BUILTIN_EQ: ScmValue = 
+    ScmValue::Procedure(ScmCallable::Builtin(|_, args| -> ScmValue {
+        assert!(args.len() == 2);
+
+        let first = scm_get_integer(&args[0]).unwrap();
+        let second = scm_get_integer(&args[1]).unwrap();
+        
+        ScmValue::Bool(first == second)
+    }));
 
 pub const SCM_BUILTIN_ADD: ScmValue =
     ScmValue::Procedure(ScmCallable::Builtin(|_, args| -> ScmValue {

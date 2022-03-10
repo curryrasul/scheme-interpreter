@@ -78,3 +78,10 @@ pub fn scm_get_float(val: &ScmValue) -> Option<f64> {
         _ => None,
     };
 }
+
+pub fn scm_get_integer(val: &ScmValue) -> Option<i64> {
+    return match *val {
+        ScmValue::Integer(val) => Some(val),
+        _ => None,
+    };
+}

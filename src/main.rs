@@ -35,29 +35,29 @@ fn gen_test_code3() -> ScmProcedure {
     };
 }
 
-#[allow(unused)]
-fn print_proc(proc: &ScmProcedure) {
-    for instr in &proc.instructions {
-        println!("{:?}", instr);
-    }
-}
+// #[allow(unused)]
+// fn print_proc(proc: &ScmProcedure) {
+//     for instr in &proc.instructions {
+//         println!("{:?}", instr);
+//     }
+// }
 
 fn main() {
-    // let args: Vec<String> = std::env::args().collect();
+    let args: Vec<String> = std::env::args().collect();
 
-    // if args.len() != 2 {
-    //     panic!("Wrong arguments number");
-    // }
+    if args.len() != 2 {
+        panic!("Wrong arguments number");
+    }
 
-    // let filename = &args[1];
-    // let code = std::fs::read_to_string(filename).expect("Error with file reading");
+    let filename = &args[1];
+    let code = std::fs::read_to_string(filename).expect("Error with file reading");
 
     let mut ctx = ScmExecContext::new();
-    // let mut parser = Parser::new(&code);
+    let mut parser = Parser::new(&code);
 
     // let mut parser = Parser::new("(display (+ (- 3 2) 2)) (newline) (display 666)");
-    let mut parser = Parser::new(
-        "(define (fact x) (if (< x 2) 1 (* (fact (- x 1)) x))) (display (fact 5))");
+    // let mut parser = Parser::new(
+    //     "(define (fact x) (if (< x 2) 1 (* (fact (- x 1)) x))) (display (fact 5))");
     // let callable = ScmCallable::CustomProc(gen_test_code3());
     let callables = parser.parse();
 
