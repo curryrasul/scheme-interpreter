@@ -184,19 +184,9 @@ impl ScmExecContext {
             variables: VariablesSet::new(),
         };
 
-        ctx.add_or_assign_var("+", SCM_BUILTIN_ADD);
-        ctx.add_or_assign_var("-", SCM_BUILTIN_SUB);
-        ctx.add_or_assign_var("*", SCM_BUILTIN_MUL);
-        ctx.add_or_assign_var("/", SCM_BUILTIN_DIV);
-        ctx.add_or_assign_var("<", SCM_BUILTIN_LE);
-        ctx.add_or_assign_var("=", SCM_BUILTIN_EQ);
-        ctx.add_or_assign_var("newline", SCM_BUILTIN_NEWLINE);
-        ctx.add_or_assign_var("display", SCM_BUILTIN_DISPLAY);
-        ctx.add_or_assign_var("list", SCM_BUILTIN_LIST);
-        ctx.add_or_assign_var("apply", SCM_BUILTIN_APPLY);
-        ctx.add_or_assign_var("cons", SCM_BUILTIN_CONS);
-        ctx.add_or_assign_var("car", SCM_BUILTIN_CAR);
-        ctx.add_or_assign_var("cdr", SCM_BUILTIN_CDR);
+        for builtin in BUILTINS_LIST.iter() {
+            ctx.add_or_assign_var(builtin.0, builtin.1.clone());
+        }
 
         ctx
     }

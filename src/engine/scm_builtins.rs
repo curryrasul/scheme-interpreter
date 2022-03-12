@@ -3,10 +3,17 @@ use crate::{
     scm_utils::scm_is_list,
 };
 
-// System
+macro_rules! scm_builtin_impl {
+    ($name:expr,$func:expr) => {
+        ($name, ScmValue::Procedure(ScmCallable::Builtin($func)))
+    };
+}
 
-pub const SCM_BUILTIN_APPLY: ScmValue =
-    ScmValue::Procedure(ScmCallable::Builtin(|ctx, args| -> ScmValue {
+pub const BUILTINS_LIST: &[(&str, ScmValue)] = &[
+    //
+    // System
+    //
+    scm_builtin_impl!("apply", |ctx, args| -> ScmValue {
         assert!(args.len() == 2);
         assert!(scm_is_list(&args[1]));
 
@@ -20,43 +27,26 @@ pub const SCM_BUILTIN_APPLY: ScmValue =
         let call_args = &scm_list_to_vec(&args[1]);
 
         return exec_callable(ctx, proc.clone(), call_args);
-    }));
-
-pub const SCM_BUILTIN_DISPLAY: ScmValue =
-    ScmValue::Procedure(ScmCallable::Builtin(|_, args| -> ScmValue {
+    }),
+    scm_builtin_impl!("display", |_, args| -> ScmValue {
         assert!(args.len() == 1);
         print!("{:?}", args[0]);
         return ScmValue::Nil;
-    }));
-
-pub const SCM_BUILTIN_ERROR: ScmValue =
-    ScmValue::Procedure(ScmCallable::Builtin(|_, args| -> ScmValue {
+    }),
+    scm_builtin_impl!("error", |_, args| -> ScmValue {
         assert!(args.len() == 1);
         eprint!("{:?}", args[0]);
         return ScmValue::Nil;
-    }));
-
-pub const SCM_BUILTIN_NEWLINE: ScmValue =
-    ScmValue::Procedure(ScmCallable::Builtin(|_, args| -> ScmValue {
+    }),
+    scm_builtin_impl!("newline", |_, args| -> ScmValue {
         assert!(args.len() == 0);
         println!("");
         return ScmValue::Nil;
-    }));
-
-// Arithmetics
-
-pub const SCM_BUILTIN_EQ: ScmValue =
-    ScmValue::Procedure(ScmCallable::Builtin(|_, args| -> ScmValue {
-        assert!(args.len() == 2);
-
-        let first = scm_get_integer(&args[0]).unwrap();
-        let second = scm_get_integer(&args[1]).unwrap();
-
-        ScmValue::Bool(first == second)
-    }));
-
-pub const SCM_BUILTIN_ADD: ScmValue =
-    ScmValue::Procedure(ScmCallable::Builtin(|_, args| -> ScmValue {
+    }),
+    //
+    // Arithmetics
+    //
+    scm_builtin_impl!("+", |_, args| -> ScmValue {
         if args.len() == 0 {
             return ScmValue::Integer(0);
         } else {
@@ -95,10 +85,8 @@ pub const SCM_BUILTIN_ADD: ScmValue =
                 return ScmValue::Number(sum);
             }
         }
-    }));
-
-pub const SCM_BUILTIN_SUB: ScmValue =
-    ScmValue::Procedure(ScmCallable::Builtin(|_, args| -> ScmValue {
+    }),
+    scm_builtin_impl!("-", |_, args| -> ScmValue {
         if args.len() == 0 {
             return ScmValue::Integer(0);
         }
@@ -130,10 +118,8 @@ pub const SCM_BUILTIN_SUB: ScmValue =
         }
 
         ScmValue::Integer(sub)
-    }));
-
-pub const SCM_BUILTIN_MUL: ScmValue =
-    ScmValue::Procedure(ScmCallable::Builtin(|_, args| -> ScmValue {
+    }),
+    scm_builtin_impl!("*", |_, args| -> ScmValue {
         if args.len() == 0 {
             return ScmValue::Integer(1);
         }
@@ -159,10 +145,8 @@ pub const SCM_BUILTIN_MUL: ScmValue =
         }
 
         ScmValue::Integer(mul)
-    }));
-
-pub const SCM_BUILTIN_DIV: ScmValue =
-    ScmValue::Procedure(ScmCallable::Builtin(|_, args| -> ScmValue {
+    }),
+    scm_builtin_impl!("/", |_, args| -> ScmValue {
         if args.len() == 0 {
             return ScmValue::Integer(1);
         }
@@ -198,10 +182,8 @@ pub const SCM_BUILTIN_DIV: ScmValue =
         }
 
         ScmValue::Integer(numerator / denominator)
-    }));
-
-pub const SCM_BUILTIN_ABS: ScmValue =
-    ScmValue::Procedure(ScmCallable::Builtin(|_, args| -> ScmValue {
+    }),
+    scm_builtin_impl!("abs", |_, args| -> ScmValue {
         assert!(args.len() == 1, "ABS requires exactly 1 argument");
         return match args[0].clone() {
             ScmValue::Integer(val) => ScmValue::Integer(val.abs()),
@@ -210,13 +192,18 @@ pub const SCM_BUILTIN_ABS: ScmValue =
                 panic!("ABS requires numeric argument");
             }
         };
-    }));
-
-// Comparison
-
-pub const SCM_BUILTIN_LE: ScmValue =
-    ScmValue::Procedure(ScmCallable::Builtin(|_, args| -> ScmValue {
-        assert!(args.len() == 2, "LE requires exactly 2 arguments");
+    }),
+    //
+    // Comparison
+    //
+    scm_builtin_impl!("=", |_, args| -> ScmValue {
+        assert!(args.len() == 2);
+        let first = scm_get_integer(&args[0]).unwrap();
+        let second = scm_get_integer(&args[1]).unwrap();
+        ScmValue::Bool(first == second)
+    }),
+    scm_builtin_impl!("<", |_, args| -> ScmValue {
+        assert!(args.len() == 2, "LT requires exactly 2 arguments");
 
         if let ScmValue::Integer(v1) = args[0] {
             if let ScmValue::Integer(v2) = args[1] {
@@ -225,27 +212,24 @@ pub const SCM_BUILTIN_LE: ScmValue =
         }
 
         let v1 = scm_get_float(&args[0])
-            .or_else(|| panic!("LE requires numbers"))
+            .or_else(|| panic!("LT requires numbers"))
             .unwrap();
         let v2 = scm_get_float(&args[1])
-            .or_else(|| panic!("LE requires numbers"))
+            .or_else(|| panic!("LT requires numbers"))
             .unwrap();
         ScmValue::Bool(v1 < v2)
-    }));
-
-// Pairs and lists
-
-pub const SCM_BUILTIN_CONS: ScmValue =
-    ScmValue::Procedure(ScmCallable::Builtin(|_, args| -> ScmValue {
+    }),
+    //
+    // Pairs and lists
+    //
+    scm_builtin_impl!("cons", |_, args| -> ScmValue {
         assert!(args.len() == 2, "CONS requires exactly 2 arguments");
         return ScmValue::DotPair {
             car: Box::new(args[0].clone()),
             cdr: Box::new(args[1].clone()),
         };
-    }));
-
-pub const SCM_BUILTIN_CAR: ScmValue =
-    ScmValue::Procedure(ScmCallable::Builtin(|_, args| -> ScmValue {
+    }),
+    scm_builtin_impl!("car", |_, args| -> ScmValue {
         assert!(args.len() == 1, "CAR requires exactly 1 argument");
         return match args[0].clone() {
             ScmValue::DotPair { car, .. } => (*car).clone(),
@@ -253,10 +237,8 @@ pub const SCM_BUILTIN_CAR: ScmValue =
                 panic!("Car requires argument of type DotPair");
             }
         };
-    }));
-
-pub const SCM_BUILTIN_CDR: ScmValue =
-    ScmValue::Procedure(ScmCallable::Builtin(|_, args| -> ScmValue {
+    }),
+    scm_builtin_impl!("cdr", |_, args| -> ScmValue {
         assert!(args.len() == 1, "CDR requires exactly 1 argument");
         return match args[0].clone() {
             ScmValue::DotPair { cdr, .. } => (*cdr).clone(),
@@ -264,10 +246,8 @@ pub const SCM_BUILTIN_CDR: ScmValue =
                 panic!("Car requires argument of type DotPair");
             }
         };
-    }));
-
-pub const SCM_BUILTIN_LIST: ScmValue =
-    ScmValue::Procedure(ScmCallable::Builtin(|_, args| -> ScmValue {
+    }),
+    scm_builtin_impl!("list", |_, args| -> ScmValue {
         let mut res = ScmValue::Nil;
         for arg in args.iter().rev() {
             res = ScmValue::DotPair {
@@ -276,19 +256,16 @@ pub const SCM_BUILTIN_LIST: ScmValue =
             };
         }
         return res;
-    }));
-
-pub const SCM_BUILTIN_LENGTH: ScmValue =
-    ScmValue::Procedure(ScmCallable::Builtin(|_, args| -> ScmValue {
+    }),
+    scm_builtin_impl!("length", |_, args| -> ScmValue {
         assert!(args.len() == 1);
         let res = scm_list_len(&args[0]);
         return ScmValue::Integer(res.unwrap());
-    }));
-
-// Types predicates
-
-pub const SCM_BUILTIN_IS_ATOM: ScmValue =
-    ScmValue::Procedure(ScmCallable::Builtin(|_, args| -> ScmValue {
+    }),
+    //
+    // Types predicates
+    //
+    scm_builtin_impl!("atom?", |_, args| -> ScmValue {
         assert!(args.len() == 1);
         if let ScmValue::Bool(_)
         | ScmValue::Char(_)
@@ -302,90 +279,73 @@ pub const SCM_BUILTIN_IS_ATOM: ScmValue =
         } else {
             return ScmValue::Bool(false);
         };
-    }));
-
-pub const SCM_BUILTIN_IS_BOOL: ScmValue =
-    ScmValue::Procedure(ScmCallable::Builtin(|_, args| -> ScmValue {
+    }),
+    scm_builtin_impl!("bool?", |_, args| -> ScmValue {
         assert!(args.len() == 1);
         if let ScmValue::Bool(_) = args[0] {
             return ScmValue::Bool(true);
         } else {
             return ScmValue::Bool(false);
         };
-    }));
-
-pub const SCM_BUILTIN_IS_INTEGER: ScmValue =
-    ScmValue::Procedure(ScmCallable::Builtin(|_, args| -> ScmValue {
+    }),
+    scm_builtin_impl!("integer?", |_, args| -> ScmValue {
         assert!(args.len() == 1);
         if let ScmValue::Integer(_) = args[0] {
             return ScmValue::Bool(true);
         } else {
             return ScmValue::Bool(false);
         };
-    }));
-
-pub const SCM_BUILTIN_IS_NUMBER: ScmValue =
-    ScmValue::Procedure(ScmCallable::Builtin(|_, args| -> ScmValue {
+    }),
+    scm_builtin_impl!("number?", |_, args| -> ScmValue {
         assert!(args.len() == 1);
         if let ScmValue::Number(_) = args[0] {
             return ScmValue::Bool(true);
         } else {
             return ScmValue::Bool(false);
         };
-    }));
-
-pub const SCM_BUILTIN_IS_NULL: ScmValue =
-    ScmValue::Procedure(ScmCallable::Builtin(|_, args| -> ScmValue {
+    }),
+    scm_builtin_impl!("null?", |_, args| -> ScmValue {
         assert!(args.len() == 1);
         if let ScmValue::Nil = args[0] {
             return ScmValue::Bool(true);
         } else {
             return ScmValue::Bool(false);
         };
-    }));
-
-pub const SCM_BUILTIN_IS_PAIR: ScmValue =
-    ScmValue::Procedure(ScmCallable::Builtin(|_, args| -> ScmValue {
+    }),
+    scm_builtin_impl!("pair?", |_, args| -> ScmValue {
         assert!(args.len() == 1);
         if let ScmValue::DotPair { .. } = args[0] {
             return ScmValue::Bool(true);
         } else {
             return ScmValue::Bool(false);
         };
-    }));
-
-pub const SCM_BUILTIN_IS_LIST: ScmValue =
-    ScmValue::Procedure(ScmCallable::Builtin(|_, args| -> ScmValue {
+    }),
+    scm_builtin_impl!("list?", |_, args| -> ScmValue {
         assert!(args.len() == 1);
         return ScmValue::Bool(scm_is_list(&args[0]));
-    }));
-
-pub const SCM_BUILTIN_IS_PROCEDURE: ScmValue =
-    ScmValue::Procedure(ScmCallable::Builtin(|_, args| -> ScmValue {
+    }),
+    scm_builtin_impl!("procedure?", |_, args| -> ScmValue {
         assert!(args.len() == 1);
         if let ScmValue::Procedure(_) = args[0] {
             return ScmValue::Bool(true);
         } else {
             return ScmValue::Bool(false);
         };
-    }));
-
-pub const SCM_BUILTIN_IS_STRING: ScmValue =
-    ScmValue::Procedure(ScmCallable::Builtin(|_, args| -> ScmValue {
+    }),
+    scm_builtin_impl!("string?", |_, args| -> ScmValue {
         assert!(args.len() == 1);
         if let ScmValue::String(_) = args[0] {
             return ScmValue::Bool(true);
         } else {
             return ScmValue::Bool(false);
         };
-    }));
-
-pub const SCM_BUILTIN_IS_SYMBOL: ScmValue =
-    ScmValue::Procedure(ScmCallable::Builtin(|_, args| -> ScmValue {
+    }),
+    scm_builtin_impl!("symbol?", |_, args| -> ScmValue {
         assert!(args.len() == 1);
         if let ScmValue::Symbol(_) = args[0] {
             return ScmValue::Bool(true);
         } else {
             return ScmValue::Bool(false);
         };
-    }));
+    }),
+];
