@@ -6,7 +6,7 @@ pub fn scm_is_list(val: &ScmValue) -> bool {
         return true;
     }
     loop {
-        if let ScmValue::DotPair { cdr, .. } = cur {
+        if let ScmValue::DotPair(_, cdr) = cur {
             if matches!(**cdr, ScmValue::Nil) {
                 return true;
             }
@@ -24,7 +24,7 @@ pub fn scm_list_len(val: &ScmValue) -> Option<i64> {
     }
     let mut res = 1i64;
     loop {
-        if let ScmValue::DotPair { cdr, .. } = cur {
+        if let ScmValue::DotPair(_, cdr) = cur {
             if matches!(**cdr, ScmValue::Nil) {
                 return Some(res);
             }
@@ -48,7 +48,7 @@ pub fn scm_list_to_vec(list: &ScmValue) -> Vec<ScmValue> {
             ScmValue::Nil => {
                 break;
             }
-            ScmValue::DotPair { car, cdr } => {
+            ScmValue::DotPair(car, cdr) => {
                 res.push(*car.clone());
                 cur = cdr;
             }

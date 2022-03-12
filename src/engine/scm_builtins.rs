@@ -26,7 +26,7 @@ pub const BUILTINS_LIST: &[(&str, ScmValue)] = &[
 
         let call_args = &scm_list_to_vec(&args[1]);
 
-        return exec_callable(ctx, proc.clone(), call_args);
+        return exec_callable(ctx, proc, call_args);
     }),
     scm_builtin_impl!("display", |_, args| -> ScmValue {
         assert!(args.len() == 1);
@@ -224,15 +224,12 @@ pub const BUILTINS_LIST: &[(&str, ScmValue)] = &[
     //
     scm_builtin_impl!("cons", |_, args| -> ScmValue {
         assert!(args.len() == 2, "CONS requires exactly 2 arguments");
-        return ScmValue::DotPair {
-            car: Box::new(args[0].clone()),
-            cdr: Box::new(args[1].clone()),
-        };
+        return ScmValue::DotPair(Box::new(args[0].clone()), Box::new(args[1].clone()));
     }),
     scm_builtin_impl!("car", |_, args| -> ScmValue {
         assert!(args.len() == 1, "CAR requires exactly 1 argument");
         return match args[0].clone() {
-            ScmValue::DotPair { car, .. } => (*car).clone(),
+            ScmValue::DotPair(car, _) => (*car).clone(),
             _ => {
                 panic!("Car requires argument of type DotPair");
             }
@@ -241,7 +238,7 @@ pub const BUILTINS_LIST: &[(&str, ScmValue)] = &[
     scm_builtin_impl!("cdr", |_, args| -> ScmValue {
         assert!(args.len() == 1, "CDR requires exactly 1 argument");
         return match args[0].clone() {
-            ScmValue::DotPair { cdr, .. } => (*cdr).clone(),
+            ScmValue::DotPair(cdr, _) => (*cdr).clone(),
             _ => {
                 panic!("Car requires argument of type DotPair");
             }
@@ -250,10 +247,7 @@ pub const BUILTINS_LIST: &[(&str, ScmValue)] = &[
     scm_builtin_impl!("list", |_, args| -> ScmValue {
         let mut res = ScmValue::Nil;
         for arg in args.iter().rev() {
-            res = ScmValue::DotPair {
-                car: Box::new(arg.clone()),
-                cdr: Box::new(res),
-            };
+            res = ScmValue::DotPair(Box::new(arg.clone()), Box::new(res));
         }
         return res;
     }),

@@ -133,14 +133,10 @@ impl Parser {
         }
 
         let tbr_size = true_instr.len() + 1;
-        for unit in true_instr.iter() {
-            instr.push(unit.clone());
-        }
+        instr.append(&mut true_instr);
         instr.push(ScmProcUnit::TrueBranch(tbr_size));
 
-        for unit in cond_instr.iter() {
-            instr.push(unit.clone());
-        }
+        instr.append(&mut cond_instr);
     }
 
     fn parse_expr(&mut self, instr: &mut Vec<ScmProcUnit>) {

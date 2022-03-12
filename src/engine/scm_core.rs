@@ -12,10 +12,7 @@ pub enum ScmValue {
     Char(char),
     String(String),
     Symbol(String),
-    DotPair {
-        car: Box<ScmValue>,
-        cdr: Box<ScmValue>,
-    },
+    DotPair(Box<ScmValue>, Box<ScmValue>),
     Nil,
     Procedure(ScmCallable),
 }
@@ -32,9 +29,9 @@ pub struct ScmProcedure {
     pub instructions: Vec<ScmProcUnit>,
 }
 
+// Used only as element of procedure's stack
 #[derive(Debug, Clone)]
 pub enum ScmProcUnit {
-    // Used only as element of procedure's stack
     Val(ScmValue),
     Variable(String),
     ProcCall(String, usize), // Name and args cnt
@@ -71,7 +68,7 @@ fn find_var(
 
 fn exec_custom_proc(
     ctx: &mut ScmExecContext,
-    proc: ScmProcedure,
+    proc: &ScmProcedure,
     call_args: &[ScmValue],
 ) -> ScmValue {
     let mut stack = Vec::<ScmValue>::new();
@@ -102,7 +99,7 @@ fn exec_custom_proc(
                     let res = match proc {
                         ScmCallable::Builtin(func) => (func)(ctx, &args),
                         ScmCallable::CustomProc(proc) => {
-                            exec_callable(ctx, ScmCallable::CustomProc(proc.clone()), &args)
+                            exec_callable(ctx, &ScmCallable::CustomProc(proc), &args)
                         }
                     };
 
@@ -169,12 +166,12 @@ fn exec_custom_proc(
 
 pub fn exec_callable(
     ctx: &mut ScmExecContext,
-    proc: ScmCallable,
+    proc: &ScmCallable,
     call_args: &[ScmValue],
 ) -> ScmValue {
     return match proc {
         ScmCallable::Builtin(func) => (func)(ctx, call_args),
-        ScmCallable::CustomProc(proc) => exec_custom_proc(ctx, proc, call_args),
+        ScmCallable::CustomProc(proc) => exec_custom_proc(ctx, &proc, call_args),
     };
 }
 
@@ -183,16 +180,23 @@ impl ScmExecContext {
         let mut ctx = Self {
             variables: VariablesSet::new(),
         };
-
         for builtin in BUILTINS_LIST.iter() {
             ctx.add_or_assign_var(builtin.0, builtin.1.clone());
         }
-
         ctx
     }
 
     pub fn add_or_assign_var(&mut self, name: &str, val: ScmValue) {
         self.variables.add_or_assign_var(name, val);
+    }
+}
+
+impl fmt::Display for ScmProcedure {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for instr in self.instructions.iter() {
+            writeln!(f, "{:?}", instr)?;
+        }
+        Result::Ok(())
     }
 }
 
@@ -205,7 +209,7 @@ impl fmt::Debug for ScmValue {
             ScmValue::Char(val) => write!(f, "ScmValue::Char({})", val),
             ScmValue::String(val) => write!(f, "ScmValue::String({})", val),
             ScmValue::Symbol(val) => write!(f, "ScmValue::Symbol({})", val),
-            ScmValue::DotPair { car, cdr } => write!(f, "({:?} . {:?})", car, cdr),
+            ScmValue::DotPair(car, cdr) => write!(f, "({:?} . {:?})", car, cdr),
             ScmValue::Nil => write!(f, "nil"),
             ScmValue::Procedure(_) => write!(f, "<proc>"),
         }

@@ -1,47 +1,5 @@
 use project::*;
 
-#[allow(dead_code)]
-fn gen_test_code3() -> ScmProcedure {
-    let mut instr = Vec::<ScmProcUnit>::new();
-
-    // (begin
-    //     (if #f
-    //         (begin (display 55) (newline))
-    //         (begin (display 10) (newline))
-    //     (display 55) (newline))
-
-    instr.push(ScmProcUnit::ProcCall(String::from("newline"), 0));
-    instr.push(ScmProcUnit::ProcCall(String::from("display"), 1));
-    instr.push(ScmProcUnit::Variable(String::from("myvar")));
-
-    instr.push(ScmProcUnit::ProcCall(String::from("newline"), 0));
-    instr.push(ScmProcUnit::ProcCall(String::from("display"), 1));
-    instr.push(ScmProcUnit::Val(ScmValue::Integer(10)));
-    instr.push(ScmProcUnit::FalseBranch(3));
-
-    instr.push(ScmProcUnit::ProcCall(String::from("newline"), 0));
-    instr.push(ScmProcUnit::ProcCall(String::from("display"), 1));
-    instr.push(ScmProcUnit::Val(ScmValue::Integer(55)));
-    instr.push(ScmProcUnit::TrueBranch(4));
-
-    instr.push(ScmProcUnit::Val(ScmValue::Bool(false)));
-
-    instr.push(ScmProcUnit::Assign(String::from("myvar")));
-    instr.push(ScmProcUnit::Val(ScmValue::Integer(666)));
-
-    return ScmProcedure {
-        params: Vec::<String>::new(),
-        instructions: instr,
-    };
-}
-
-// #[allow(unused)]
-// fn print_proc(proc: &ScmProcedure) {
-//     for instr in &proc.instructions {
-//         println!("{:?}", instr);
-//     }
-// }
-
 fn main() {
     let args: Vec<String> = std::env::args().collect();
 
@@ -55,18 +13,13 @@ fn main() {
     let mut ctx = ScmExecContext::new();
     let mut parser = Parser::new(&code);
 
-    // let mut parser = Parser::new("(display (+ (- 3 2) 2)) (newline) (display 666)");
-    // let mut parser = Parser::new(
-    //     "(define (fact x) (if (< x 2) 1 (* (fact (- x 1)) x))) (display (fact 5))");
-    // let callable = ScmCallable::CustomProc(gen_test_code3());
     let callables = parser.parse();
 
-    // if let ScmCallable::CustomProc(proc) = &callables[0] {
-    //     print_proc(proc);
-    // }
-
-    for callable in callables.iter() {
-        exec_callable(&mut ctx, callable.clone(), &Vec::new());
+    for callable in callables.into_iter() {
+        // if let ScmCallable::CustomProc(proc) = &callable {
+        //     println!("{}", proc);
+        // }
+        exec_callable(&mut ctx, &callable, &Vec::new());
     }
     println!();
 }
