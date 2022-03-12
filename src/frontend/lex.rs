@@ -1,4 +1,5 @@
 use crate::engine::scm_core::ScmValue;
+use crate::engine::typed_num::TypedNum;
 use std::vec::IntoIter;
 
 #[derive(Debug, Clone)]
@@ -90,7 +91,8 @@ impl Lexer {
         }
 
         let s = s.parse().unwrap();
-        self.tokens.push(Token::Value(ScmValue::Integer(s)));
+        self.tokens
+            .push(Token::Value(ScmValue::Number(TypedNum::Integer(s))));
 
         self.parse_delimiter();
     }

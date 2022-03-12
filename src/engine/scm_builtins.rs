@@ -1,6 +1,5 @@
 use crate::{
-    scm_core::*, scm_get_float, scm_get_integer, scm_list_len, scm_list_to_vec,
-    scm_utils::scm_is_list,
+    scm_core::*, scm_list_len, scm_list_to_vec, scm_utils::scm_is_list, typed_num::TypedNum,
 };
 
 macro_rules! scm_builtin_impl {
@@ -48,176 +47,130 @@ pub const BUILTINS_LIST: &[(&str, ScmValue)] = &[
     //
     scm_builtin_impl!("+", |_, args| -> ScmValue {
         if args.len() == 0 {
-            return ScmValue::Integer(0);
+            ScmValue::Number(TypedNum::Integer(0))
         } else {
-            let mut is_integer = true;
+            let mut res = TypedNum::Integer(0);
             for arg in args.iter() {
-                match *arg {
-                    ScmValue::Integer(_) => {}
-                    ScmValue::Number(_) => {
-                        is_integer = false;
-                        break;
-                    }
-                    _ => {
-                        panic!("Adding non numeric values");
-                    }
-                };
-            }
-
-            if is_integer {
-                let mut sum = 0i64;
-                for arg in args.iter() {
-                    sum += match *arg {
-                        ScmValue::Integer(val) => val,
-                        _ => panic!(""),
-                    }
+                if let ScmValue::Number(val) = arg {
+                    res = res + *val;
+                } else {
+                    panic!("Adding non numeric values");
                 }
-                return ScmValue::Integer(sum);
-            } else {
-                let mut sum = 0f64;
-                for arg in args.iter() {
-                    sum += match *arg {
-                        ScmValue::Integer(val) => val as f64,
-                        ScmValue::Number(val) => val,
-                        _ => panic!(""),
-                    }
-                }
-                return ScmValue::Number(sum);
             }
+            ScmValue::Number(res)
         }
     }),
     scm_builtin_impl!("-", |_, args| -> ScmValue {
         if args.len() == 0 {
-            return ScmValue::Integer(0);
+            return ScmValue::Number(TypedNum::Integer(0)); // TODO
         }
 
         if args.len() == 1 {
-            if let ScmValue::Integer(n) = args[0] {
-                return ScmValue::Integer(-n);
+            if let ScmValue::Number(n) = args[0] {
+                return ScmValue::Number(-n);
+            } else {
+                panic!("Unsupported value");
             }
         }
 
-        for arg in args.iter() {
-            match *arg {
-                ScmValue::Integer(_) => (),
-                _ => panic!("Unsupported value"),
+        let mut res;
+        if let ScmValue::Number(n) = args[0] {
+            res = n;
+        } else {
+            panic!("Unsupported value");
+        }
+
+        for arg in args.iter().skip(1) {
+            if let ScmValue::Number(n) = arg {
+                res = res - *n;
+            } else {
+                panic!("Unsupported value");
             }
         }
 
-        let mut iterator = args.iter();
-        let mut sub = 0;
-
-        if let ScmValue::Integer(n) = iterator.next().unwrap() {
-            sub = *n;
-        }
-
-        for arg in iterator {
-            if let ScmValue::Integer(n) = arg {
-                sub -= *n;
-            }
-        }
-
-        ScmValue::Integer(sub)
+        ScmValue::Number(res)
     }),
     scm_builtin_impl!("*", |_, args| -> ScmValue {
         if args.len() == 0 {
-            return ScmValue::Integer(1);
-        }
-
-        if args.len() == 1 {
-            if let ScmValue::Integer(n) = args[0] {
-                return ScmValue::Integer(n);
+            ScmValue::Number(TypedNum::Integer(1))
+        } else {
+            let mut res = TypedNum::Integer(0);
+            for arg in args.iter() {
+                if let ScmValue::Number(val) = arg {
+                    res = res * *val;
+                } else {
+                    panic!("Multiplying non numeric values");
+                }
             }
+            ScmValue::Number(res)
         }
-
-        for arg in args.iter() {
-            match *arg {
-                ScmValue::Integer(_) => (),
-                _ => panic!("Unsupported value"),
-            }
-        }
-
-        let mut mul = 1;
-        for arg in args {
-            if let ScmValue::Integer(n) = arg {
-                mul *= *n;
-            }
-        }
-
-        ScmValue::Integer(mul)
     }),
     scm_builtin_impl!("/", |_, args| -> ScmValue {
         if args.len() == 0 {
-            return ScmValue::Integer(1);
+            return ScmValue::Number(TypedNum::Integer(0)); // TODO
         }
 
         if args.len() == 1 {
-            if let ScmValue::Integer(n) = args[0] {
-                if n == 0 {
-                    panic!("Division by zero")
-                }
-                return ScmValue::Integer(1 / n);
+            if let ScmValue::Number(n) = args[0] {
+                return ScmValue::Number(TypedNum::Float(1f64) / n);
+            } else {
+                panic!("Unsupported value");
             }
         }
 
-        for arg in args.iter() {
-            match *arg {
-                ScmValue::Integer(_) => (),
-                _ => panic!("Unsupported value"),
+        let numer;
+        if let ScmValue::Number(n) = args[0] {
+            numer = n;
+        } else {
+            panic!("Unsupported value");
+        }
+
+        let mut denom = TypedNum::Float(1f64);
+        for arg in args.iter().skip(1) {
+            if let ScmValue::Number(n) = arg {
+                denom = denom * *n;
+            } else {
+                panic!("Unsupported value");
             }
         }
 
-        let mut iterator = args.iter();
-        let mut numerator = 1;
-        let mut denominator = 1;
-
-        if let ScmValue::Integer(n) = iterator.next().unwrap() {
-            numerator = *n;
-        }
-
-        for arg in iterator {
-            if let ScmValue::Integer(n) = arg {
-                denominator *= *n;
-            }
-        }
-
-        ScmValue::Integer(numerator / denominator)
+        ScmValue::Number(numer / denom)
     }),
     scm_builtin_impl!("abs", |_, args| -> ScmValue {
         assert!(args.len() == 1, "ABS requires exactly 1 argument");
-        return match args[0].clone() {
-            ScmValue::Integer(val) => ScmValue::Integer(val.abs()),
-            ScmValue::Number(val) => ScmValue::Number(val.abs()),
-            _ => {
-                panic!("ABS requires numeric argument");
-            }
-        };
+        if let ScmValue::Number(val) = args[0] {
+            ScmValue::Number(val.abs())
+        } else {
+            panic!("ABS requires numeric argument");
+        }
     }),
     //
     // Comparison
     //
     scm_builtin_impl!("=", |_, args| -> ScmValue {
         assert!(args.len() == 2);
-        let first = scm_get_integer(&args[0]).unwrap();
-        let second = scm_get_integer(&args[1]).unwrap();
-        ScmValue::Bool(first == second)
+        if let ScmValue::Number(v1) = args[0] {
+            if let ScmValue::Number(v2) = args[1] {
+                return ScmValue::Bool(v1 == v2);
+            } else {
+                panic!("");
+            }
+        } else {
+            panic!("");
+        }
     }),
     scm_builtin_impl!("<", |_, args| -> ScmValue {
         assert!(args.len() == 2, "LT requires exactly 2 arguments");
 
-        if let ScmValue::Integer(v1) = args[0] {
-            if let ScmValue::Integer(v2) = args[1] {
+        if let ScmValue::Number(v1) = args[0] {
+            if let ScmValue::Number(v2) = args[1] {
                 return ScmValue::Bool(v1 < v2);
+            } else {
+                panic!("");
             }
+        } else {
+            panic!("");
         }
-
-        let v1 = scm_get_float(&args[0])
-            .or_else(|| panic!("LT requires numbers"))
-            .unwrap();
-        let v2 = scm_get_float(&args[1])
-            .or_else(|| panic!("LT requires numbers"))
-            .unwrap();
-        ScmValue::Bool(v1 < v2)
     }),
     //
     // Pairs and lists
@@ -254,7 +207,7 @@ pub const BUILTINS_LIST: &[(&str, ScmValue)] = &[
     scm_builtin_impl!("length", |_, args| -> ScmValue {
         assert!(args.len() == 1);
         let res = scm_list_len(&args[0]);
-        return ScmValue::Integer(res.unwrap());
+        return ScmValue::Number(TypedNum::Integer(res.unwrap()));
     }),
     //
     // Types predicates
@@ -263,7 +216,6 @@ pub const BUILTINS_LIST: &[(&str, ScmValue)] = &[
         assert!(args.len() == 1);
         if let ScmValue::Bool(_)
         | ScmValue::Char(_)
-        | ScmValue::Integer(_)
         | ScmValue::Number(_)
         | ScmValue::String(_)
         | ScmValue::Symbol(_)
@@ -284,11 +236,15 @@ pub const BUILTINS_LIST: &[(&str, ScmValue)] = &[
     }),
     scm_builtin_impl!("integer?", |_, args| -> ScmValue {
         assert!(args.len() == 1);
-        if let ScmValue::Integer(_) = args[0] {
-            return ScmValue::Bool(true);
+        if let ScmValue::Number(num) = args[0] {
+            if let TypedNum::Integer(_) = num {
+                ScmValue::Bool(true)
+            } else {
+                ScmValue::Bool(false)
+            }
         } else {
-            return ScmValue::Bool(false);
-        };
+            ScmValue::Bool(false)
+        }
     }),
     scm_builtin_impl!("number?", |_, args| -> ScmValue {
         assert!(args.len() == 1);

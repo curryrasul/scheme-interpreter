@@ -1,13 +1,13 @@
 use crate::{
     engine::{scm_builtins::*, scm_is_true},
+    typed_num::TypedNum,
     VariablesSet,
 };
 use core::fmt;
 
 #[derive(Clone)]
 pub enum ScmValue {
-    Integer(i64),
-    Number(f64), // TODO: exact/inexact
+    Number(TypedNum),
     Bool(bool),
     Char(char),
     String(String),
@@ -203,7 +203,6 @@ impl fmt::Display for ScmProcedure {
 impl fmt::Debug for ScmValue {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            ScmValue::Integer(val) => write!(f, "ScmValue::Integer({})", val),
             ScmValue::Number(val) => write!(f, "ScmValue::Number({})", val),
             ScmValue::Bool(val) => write!(f, "ScmValue::Bool({})", val),
             ScmValue::Char(val) => write!(f, "ScmValue::Char({})", val),
