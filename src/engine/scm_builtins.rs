@@ -25,28 +25,28 @@ pub const BUILTINS_LIST: &[(&str, ScmValue)] = &[
 
         let call_args = &scm_list_to_vec(&args[1]);
 
-        return exec_callable(ctx, proc, call_args);
+        exec_callable(ctx, proc, call_args)
     }),
     scm_builtin_impl!("display", |_, args| -> ScmValue {
         assert!(args.len() == 1);
         print!("{:?}", args[0]);
-        return ScmValue::Nil;
+        ScmValue::Nil
     }),
     scm_builtin_impl!("error", |_, args| -> ScmValue {
         assert!(args.len() == 1);
         eprint!("{:?}", args[0]);
-        return ScmValue::Nil;
+        ScmValue::Nil
     }),
     scm_builtin_impl!("newline", |_, args| -> ScmValue {
-        assert!(args.len() == 0);
+        assert!(args.is_empty());
         println!("");
-        return ScmValue::Nil;
+        ScmValue::Nil
     }),
     //
     // Arithmetics
     //
     scm_builtin_impl!("+", |_, args| -> ScmValue {
-        if args.len() == 0 {
+        if args.is_empty() {
             ScmValue::Number(TypedNum::Integer(0))
         } else {
             let mut res = TypedNum::Integer(0);
@@ -61,7 +61,7 @@ pub const BUILTINS_LIST: &[(&str, ScmValue)] = &[
         }
     }),
     scm_builtin_impl!("-", |_, args| -> ScmValue {
-        if args.len() == 0 {
+        if args.is_empty() {
             return ScmValue::Number(TypedNum::Integer(0)); // TODO
         }
 
@@ -73,12 +73,11 @@ pub const BUILTINS_LIST: &[(&str, ScmValue)] = &[
             }
         }
 
-        let mut res;
-        if let ScmValue::Number(n) = args[0] {
-            res = n;
+        let mut res = if let ScmValue::Number(n) = args[0] {
+            n
         } else {
             panic!("Unsupported value");
-        }
+        };
 
         for arg in args.iter().skip(1) {
             if let ScmValue::Number(n) = arg {
@@ -91,7 +90,7 @@ pub const BUILTINS_LIST: &[(&str, ScmValue)] = &[
         ScmValue::Number(res)
     }),
     scm_builtin_impl!("*", |_, args| -> ScmValue {
-        if args.len() == 0 {
+        if args.is_empty() {
             ScmValue::Number(TypedNum::Integer(1))
         } else {
             let mut res = TypedNum::Integer(0);
@@ -106,7 +105,7 @@ pub const BUILTINS_LIST: &[(&str, ScmValue)] = &[
         }
     }),
     scm_builtin_impl!("/", |_, args| -> ScmValue {
-        if args.len() == 0 {
+        if args.is_empty() {
             return ScmValue::Number(TypedNum::Integer(0)); // TODO
         }
 
@@ -118,12 +117,11 @@ pub const BUILTINS_LIST: &[(&str, ScmValue)] = &[
             }
         }
 
-        let numer;
-        if let ScmValue::Number(n) = args[0] {
-            numer = n;
+        let numer = if let ScmValue::Number(n) = args[0] {
+            n
         } else {
             panic!("Unsupported value");
-        }
+        };
 
         let mut denom = TypedNum::Float(1f64);
         for arg in args.iter().skip(1) {
@@ -151,7 +149,7 @@ pub const BUILTINS_LIST: &[(&str, ScmValue)] = &[
         assert!(args.len() == 2);
         if let ScmValue::Number(v1) = args[0] {
             if let ScmValue::Number(v2) = args[1] {
-                return ScmValue::Bool(v1 == v2);
+                ScmValue::Bool(v1 == v2)
             } else {
                 panic!("");
             }
@@ -164,7 +162,7 @@ pub const BUILTINS_LIST: &[(&str, ScmValue)] = &[
 
         if let ScmValue::Number(v1) = args[0] {
             if let ScmValue::Number(v2) = args[1] {
-                return ScmValue::Bool(v1 < v2);
+                ScmValue::Bool(v1 < v2)
             } else {
                 panic!("");
             }
@@ -177,7 +175,7 @@ pub const BUILTINS_LIST: &[(&str, ScmValue)] = &[
     //
     scm_builtin_impl!("cons", |_, args| -> ScmValue {
         assert!(args.len() == 2, "CONS requires exactly 2 arguments");
-        return ScmValue::DotPair(Box::new(args[0].clone()), Box::new(args[1].clone()));
+        ScmValue::DotPair(Box::new(args[0].clone()), Box::new(args[1].clone()))
     }),
     scm_builtin_impl!("car", |_, args| -> ScmValue {
         assert!(args.len() == 1, "CAR requires exactly 1 argument");
@@ -202,12 +200,12 @@ pub const BUILTINS_LIST: &[(&str, ScmValue)] = &[
         for arg in args.iter().rev() {
             res = ScmValue::DotPair(Box::new(arg.clone()), Box::new(res));
         }
-        return res;
+        res
     }),
     scm_builtin_impl!("length", |_, args| -> ScmValue {
         assert!(args.len() == 1);
         let res = scm_list_len(&args[0]);
-        return ScmValue::Number(TypedNum::Integer(res.unwrap()));
+        ScmValue::Number(TypedNum::Integer(res.unwrap()))
     }),
     //
     // Types predicates
@@ -221,27 +219,23 @@ pub const BUILTINS_LIST: &[(&str, ScmValue)] = &[
         | ScmValue::Symbol(_)
         | ScmValue::Nil = args[0]
         {
-            return ScmValue::Bool(true);
+            ScmValue::Bool(true)
         } else {
-            return ScmValue::Bool(false);
-        };
+            ScmValue::Bool(false)
+        }
     }),
     scm_builtin_impl!("bool?", |_, args| -> ScmValue {
         assert!(args.len() == 1);
         if let ScmValue::Bool(_) = args[0] {
-            return ScmValue::Bool(true);
+            ScmValue::Bool(true)
         } else {
-            return ScmValue::Bool(false);
-        };
+            ScmValue::Bool(false)
+        }
     }),
     scm_builtin_impl!("integer?", |_, args| -> ScmValue {
         assert!(args.len() == 1);
         if let ScmValue::Number(num) = args[0] {
-            if let TypedNum::Integer(_) = num {
-                ScmValue::Bool(true)
-            } else {
-                ScmValue::Bool(false)
-            }
+            ScmValue::Bool(matches!(num, TypedNum::Integer(_)))
         } else {
             ScmValue::Bool(false)
         }
@@ -249,53 +243,53 @@ pub const BUILTINS_LIST: &[(&str, ScmValue)] = &[
     scm_builtin_impl!("number?", |_, args| -> ScmValue {
         assert!(args.len() == 1);
         if let ScmValue::Number(_) = args[0] {
-            return ScmValue::Bool(true);
+            ScmValue::Bool(true)
         } else {
-            return ScmValue::Bool(false);
-        };
+            ScmValue::Bool(false)
+        }
     }),
     scm_builtin_impl!("null?", |_, args| -> ScmValue {
         assert!(args.len() == 1);
         if let ScmValue::Nil = args[0] {
-            return ScmValue::Bool(true);
+            ScmValue::Bool(true)
         } else {
-            return ScmValue::Bool(false);
-        };
+            ScmValue::Bool(false)
+        }
     }),
     scm_builtin_impl!("pair?", |_, args| -> ScmValue {
         assert!(args.len() == 1);
         if let ScmValue::DotPair { .. } = args[0] {
-            return ScmValue::Bool(true);
+            ScmValue::Bool(true)
         } else {
-            return ScmValue::Bool(false);
-        };
+            ScmValue::Bool(false)
+        }
     }),
     scm_builtin_impl!("list?", |_, args| -> ScmValue {
         assert!(args.len() == 1);
-        return ScmValue::Bool(scm_is_list(&args[0]));
+        ScmValue::Bool(scm_is_list(&args[0]))
     }),
     scm_builtin_impl!("procedure?", |_, args| -> ScmValue {
         assert!(args.len() == 1);
         if let ScmValue::Procedure(_) = args[0] {
-            return ScmValue::Bool(true);
+            ScmValue::Bool(true)
         } else {
-            return ScmValue::Bool(false);
-        };
+            ScmValue::Bool(false)
+        }
     }),
     scm_builtin_impl!("string?", |_, args| -> ScmValue {
         assert!(args.len() == 1);
         if let ScmValue::String(_) = args[0] {
-            return ScmValue::Bool(true);
+            ScmValue::Bool(true)
         } else {
-            return ScmValue::Bool(false);
-        };
+            ScmValue::Bool(false)
+        }
     }),
     scm_builtin_impl!("symbol?", |_, args| -> ScmValue {
         assert!(args.len() == 1);
         if let ScmValue::Symbol(_) = args[0] {
-            return ScmValue::Bool(true);
+            ScmValue::Bool(true)
         } else {
-            return ScmValue::Bool(false);
-        };
+            ScmValue::Bool(false)
+        }
     }),
 ];

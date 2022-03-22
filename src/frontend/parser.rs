@@ -45,7 +45,7 @@ impl Parser {
     fn gen_define(&mut self, instr: &mut Vec<ScmProcUnit>) {
         match self.peek() {
             Token::Identifier(ident) => {
-                instr.push(ScmProcUnit::Assign(String::from(ident)));
+                instr.push(ScmProcUnit::Assign(ident));
                 self.next();
 
                 // Get one value. If there are others, error will be raised later.
@@ -56,7 +56,7 @@ impl Parser {
                 self.next();
 
                 if let Token::Identifier(ident) = self.peek() {
-                    instr.push(ScmProcUnit::Assign(String::from(ident)));
+                    instr.push(ScmProcUnit::Assign(ident));
                 } else {
                     panic!("Expected procedure name");
                 }

@@ -45,7 +45,7 @@ pub struct ScmExecContext {
     pub variables: VariablesSet<ScmValue>,
 }
 
-fn find_arg(name: &String, args: &[ScmValue], args_names: &[String]) -> Option<ScmValue> {
+fn find_arg(name: &str, args: &[ScmValue], args_names: &[String]) -> Option<ScmValue> {
     assert!(args.len() == args_names.len());
     let mut res = None;
     for i in 0..args_names.len() {
@@ -54,16 +54,16 @@ fn find_arg(name: &String, args: &[ScmValue], args_names: &[String]) -> Option<S
             break;
         }
     }
-    return res;
+    res
 }
 
 fn find_var(
-    name: &String,
+    name: &str,
     args: &[ScmValue],
     args_names: &[String],
     ctx: &mut ScmExecContext,
 ) -> Option<ScmValue> {
-    find_arg(name, args, args_names).or_else(|| ctx.variables.find_var(&name))
+    find_arg(name, args, args_names).or_else(|| ctx.variables.find_var(name))
 }
 
 fn exec_custom_proc(
@@ -82,7 +82,7 @@ fn exec_custom_proc(
 
             ScmProcUnit::Variable(name) => {
                 let var = find_var(name, call_args, &proc.params, ctx);
-                assert!(!var.is_none(), "Unknown variable: {}", name);
+                assert!(var.is_some(), "Unknown variable: {}", name);
                 stack.push(var.unwrap());
             }
 
@@ -93,7 +93,7 @@ fn exec_custom_proc(
                 }
 
                 let var = find_var(proc_name, call_args, &proc.params, ctx);
-                assert!(!var.is_none(), "Unknown procedure: {}", proc_name);
+                assert!(var.is_some(), "Unknown procedure: {}", proc_name);
 
                 if let ScmValue::Procedure(proc) = var.unwrap() {
                     let res = match proc {
@@ -169,10 +169,10 @@ pub fn exec_callable(
     proc: &ScmCallable,
     call_args: &[ScmValue],
 ) -> ScmValue {
-    return match proc {
+    match proc {
         ScmCallable::Builtin(func) => (func)(ctx, call_args),
-        ScmCallable::CustomProc(proc) => exec_custom_proc(ctx, &proc, call_args),
-    };
+        ScmCallable::CustomProc(proc) => exec_custom_proc(ctx, proc, call_args),
+    }
 }
 
 impl ScmExecContext {
@@ -188,6 +188,12 @@ impl ScmExecContext {
 
     pub fn add_or_assign_var(&mut self, name: &str, val: ScmValue) {
         self.variables.add_or_assign_var(name, val);
+    }
+}
+
+impl Default for ScmExecContext {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

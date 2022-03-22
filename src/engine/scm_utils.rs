@@ -57,30 +57,30 @@ pub fn scm_list_to_vec(list: &ScmValue) -> Vec<ScmValue> {
             }
         }
     }
-    return res;
+    res
 }
 
 pub fn scm_is_true(val: &ScmValue) -> bool {
-    return match val {
+    match val {
         ScmValue::Bool(val) => *val,
         _ => true,
-    };
+    }
 }
 
 pub fn scm_is_false(val: &ScmValue) -> bool {
-    return !scm_is_true(val);
+    !scm_is_true(val)
 }
 
 pub fn scm_get_float(val: &ScmValue) -> Option<f64> {
-    return match *val {
+    match *val {
         ScmValue::Number(val) => Some(val.to_float()),
         _ => None,
-    };
+    }
 }
 
 pub fn scm_get_integer(val: &ScmValue) -> Option<i64> {
-    return match *val {
+    match *val {
         ScmValue::Number(val) => Some(val.to_int()),
         _ => None,
-    };
+    }
 }

@@ -116,13 +116,11 @@ impl Lexer {
     }
 
     fn parse_boolean(&mut self) {
-        let val;
-
-        match self.current {
-            Some('t') => val = true,
-            Some('f') => val = false,
+        let val = match self.current {
+            Some('t') => true,
+            Some('f') => false,
             _ => panic!("Lexer error bool type on {} {}", self.line, self.column),
-        }
+        };
 
         self.increment();
 

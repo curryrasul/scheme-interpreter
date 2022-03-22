@@ -5,11 +5,11 @@ pub struct NamedArgsList<T> {
 
 impl<T: Clone> NamedArgsList<T> {
     pub fn new() -> Self {
-        return Self { args: Vec::new() };
+        Self { args: Vec::new() }
     }
 
     pub fn get_ith_val(&self, ind: usize) -> T {
-        return self.args[ind].1.clone();
+        self.args[ind].1.clone()
     }
 
     pub fn find_by_name(&self, name: &str) -> Option<T> {
@@ -18,15 +18,19 @@ impl<T: Clone> NamedArgsList<T> {
                 return Some(arg.1.clone());
             }
         }
-        return None;
+        None
     }
 
     pub fn len(&self) -> usize {
-        return self.args.len();
+        self.args.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 
     pub fn iter(&self) -> std::slice::Iter<'_, (String, T)> {
-        return self.args.iter();
+        self.args.iter()
     }
 
     pub fn copy_values(&self) -> Vec<T> {
@@ -34,7 +38,13 @@ impl<T: Clone> NamedArgsList<T> {
         for arg in self.args.iter() {
             res.push(arg.1.clone());
         }
-        return res;
+        res
+    }
+}
+
+impl<T: Clone> Default for NamedArgsList<T> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -47,7 +57,7 @@ impl<T: Clone> VariablesSet<T> {
     pub fn new() -> Self {
         let mut res = VariablesSet { sets: Vec::new() };
         res.sets.push(NamedArgsList::<T>::new());
-        return res;
+        res
     }
 
     pub fn find_var(&self, name: &str) -> Option<T> {
@@ -57,7 +67,7 @@ impl<T: Clone> VariablesSet<T> {
                 return val;
             }
         }
-        return None;
+        None
     }
 
     pub fn add_or_assign_var(&mut self, name: &str, val: T) {
@@ -77,5 +87,11 @@ impl<T: Clone> VariablesSet<T> {
 
     pub fn pop_set(&mut self) {
         self.sets.pop();
+    }
+}
+
+impl<T: Clone> Default for VariablesSet<T> {
+    fn default() -> Self {
+        Self::new()
     }
 }

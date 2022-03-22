@@ -55,15 +55,15 @@ impl TypedNum {
         let lvl2 = num2.get_level();
 
         if lvl1 == FloatLvl || lvl2 == FloatLvl {
-            return (num1.to_float_wn(), num2.to_float_wn());
+            (num1.to_float_wn(), num2.to_float_wn())
         } else {
-            return (num1.to_int_wn(), num2.to_int_wn());
+            (num1.to_int_wn(), num2.to_int_wn())
         }
     }
 }
 
 macro_rules! gen_binary_op {
-    ($trait:ident,$func_name:ident,$op:expr) => {
+    ($trait:ident, $func_name:ident, $op:expr) => {
         impl ops::$trait for TypedNum {
             type Output = Self;
 
@@ -123,13 +123,13 @@ impl cmp::PartialOrd for TypedNum {
 
         if let Self::Integer(v1) = val1 {
             if let Self::Integer(v2) = val2 {
-                return v1.partial_cmp(&v2);
+                v1.partial_cmp(&v2)
             } else {
                 unreachable!();
             }
         } else if let Self::Float(v1) = val1 {
             if let Self::Float(v2) = val2 {
-                return v1.partial_cmp(&v2);
+                v1.partial_cmp(&v2)
             } else {
                 unreachable!();
             }
