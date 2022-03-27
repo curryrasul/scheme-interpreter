@@ -3,11 +3,12 @@ use project::*;
 fn main() {
     let args: Vec<String> = std::env::args().collect();
 
-    if args.len() != 2 {
-        panic!("Wrong arguments number");
+    let mut filename = &"test.scm".to_owned();
+
+    if args.len() == 2 {
+        filename = &args[1];
     }
 
-    let filename = &args[1];
     let code = std::fs::read_to_string(filename).expect("Error with file reading");
 
     let mut ctx = ScmExecContext::new();
